@@ -9,7 +9,7 @@ set -euo pipefail
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.2.0"
+VERSION="1.3.0"
 
 UPDATE_URL="https://sh.stack.pl/selfupdate.sh"
 SHA256_URL="${UPDATE_URL}.sha256"

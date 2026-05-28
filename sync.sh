@@ -152,7 +152,6 @@ print_version() {
 # Pobieranie
 # ==================================================
 download_files() {
-    echo "Pobieranie aktualizacji..."
     echo curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
     curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
     if [ $? -ne 0 ]; then
@@ -173,15 +172,14 @@ download_files() {
 # SHA256
 # ==================================================
 verify_checksum() {
-    echo "Weryfikacja pobranego pliku..."
     local expected_hash
     local actual_hash
     expected_hash=$(cut -d' ' -f1 "$TMP_HASH")
     actual_hash=$(sha256sum "$TMP_FILE" | cut -d' ' -f1)
-    echo "Expected : $expected_hash"
-    echo "Actual   : $actual_hash"
     if [ "$expected_hash" != "$actual_hash" ]; then
         echo "BŁĄD: suma SHA256 jest niepoprawna."
+        echo "Expected : $expected_hash"
+        echo "Actual   : $actual_hash"
         cleanup
         exit 1 || return 1
     fi
@@ -221,14 +219,14 @@ update_script() {
         exit 0 || return 0
     fi
     if ! version_greater "$new_version" "$VERSION"; then
-        echo "Nowa wersja NIE jest nowsza."
+        echo "Skrypt lokalny jest nowszy niż dostępna aktualizacja. Przerywam aktualizację."
         exit 0 || return 0
     fi
     echo "Wykryto nową wersję."
     # ==============================================
     # Backup
     # ==============================================
-    echo "Tworzenie backupu..."
+    echo "Tworzenie backupu aktualnej wersji skryptu w $BACKUP_PATH"
     cp "$SCRIPT_PATH" "$BACKUP_PATH"
     # ==============================================
     # Instalacja
@@ -239,8 +237,6 @@ update_script() {
     chmod +x "$SCRIPT_PATH"
     trap - ERR
     echo "Aktualizacja zakończona sukcesem."
-    echo "Backup:"
-    echo "$BACKUP_PATH"
 }
 
 
@@ -758,40 +754,3 @@ case "${1:-}" in
         echo
         ;;
 esac
-
-
-# if [[ "$1" == "init" ]]; then
-#     init ${2%/}
-# elif [[ $1 == "init-deploy" ]]; then
-#     init-deploy ${2%/}
-# elif [[ $1 == "backup" ]]; then
-#     backup ${2%/} $3 $4 $5 $6 $7 $8 $9
-# elif [[ $1 == "deploy" ]]; then
-#     deploy ${2%/} $3 $4 $5 $6 $7 $8 $9
-# elif [[ $1 == "reinit-deploy" ]]; then
-#     reinit-deploy ${2%/}
-# elif [[ $1 == "clone" ]]; then
-#     init ${2%/}
-#     backup ${2%/}
-#     init-deploy ${2%/}
-#     rotate ${2%/}
-#     status ${2%/}   
-# elif [[ $1 == "rotate" ]]; then
-#     rotate ${2%/}
-#     # status ${2%/} 
-# elif [[ $1 == "help" ]]; then
-#     help_script
- 
-# elif [[ $1 == "status" ]]; then
-#     if [[ ! -n "$2" ]]; then
-#         echo "Please provide a project name as the second argument. Example:"
-#         echo "    $ sync.sh status my_project"
-#         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-#     fi
-#     status ${2%/}
-# else 
-#     echo "sync.sh is rsync+ssh wrapper for file synchronization."
-#     echo
-#     echo "Run  'sync.sh help'  for usage instructions"
-#     echo
-# fi

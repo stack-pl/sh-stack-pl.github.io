@@ -49,7 +49,7 @@ local_rotate_dir="rotate/"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.2"
+VERSION="1.0.3"
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
 SHA256_URL="${UPDATE_URL}.sha256"
@@ -398,7 +398,12 @@ reinit-deploy() {
 
     echo "Copying files from $project_name/$local_backup_dir."
     echo "This is your working directory for editing files before deploying them to the server."
-    cp -a "$project_name/$local_backup_dir" "$project_name/$local_deploy_dir" 
+    if [[ -d "$project_name/$local_deploy_dir" ]]; then 
+        cp -a "$project_name/$local_backup_dir"/* "$project_name/$local_deploy_dir"
+    else
+        cp -a "$project_name/$local_backup_dir" "$project_name/$local_deploy_dir" 
+    fi
+
     echo "Done!"  
 }
 backup() {
@@ -733,7 +738,7 @@ case "${1:-}" in
         init-deploy ${2%/}
         ;;
     reinit-deploy)
-        reinit-deploy ${2%/}
+        reinit-deploy $2
         ;;
     rotate)
         rotate $2

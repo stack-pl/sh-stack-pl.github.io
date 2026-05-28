@@ -49,7 +49,7 @@ local_rotate_dir="rotate/"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
 SHA256_URL="${UPDATE_URL}.sha256"

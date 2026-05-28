@@ -49,7 +49,7 @@ local_rotate_dir="rotate/"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
 SHA256_URL="${UPDATE_URL}.sha256"
@@ -105,7 +105,7 @@ rollback() {
         echo "Brak backupu!"
     fi
     cleanup
-    exit 1
+    exit 1 || return 1
 }
 
 # ==================================================
@@ -126,7 +126,7 @@ require_tools() {
     for tool in "${tools[@]}"; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             echo "Brak wymaganego narzędzia: $tool"
-            exit 1
+            exit 1 || return 1
         fi
     done
 }
@@ -153,12 +153,14 @@ print_version() {
 # ==================================================
 download_files() {
     echo "Pobieranie aktualizacji..."
+    echo curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
     curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
     if [ $? -ne 0 ]; then
         echo "BŁĄD: Nie można pobrać aktualizacji z $UPDATE_URL"
         cleanup
         exit 1 || return 1
     fi
+    echo curl -fsSL "$SHA256_URL" -o "$TMP_HASH"
     curl -fsSL "$SHA256_URL" -o "$TMP_HASH"
     if [ $? -ne 0 ]; then
         echo "BŁĄD: Nie można pobrać sumy kontrolnej z $SHA256_URL"
@@ -171,7 +173,7 @@ download_files() {
 # SHA256
 # ==================================================
 verify_checksum() {
-    echo "Weryfikacja SHA256..."
+    echo "Weryfikacja pobranego pliku..."
     local expected_hash
     local actual_hash
     expected_hash=$(cut -d' ' -f1 "$TMP_HASH")
@@ -181,7 +183,7 @@ verify_checksum() {
     if [ "$expected_hash" != "$actual_hash" ]; then
         echo "BŁĄD: suma SHA256 jest niepoprawna."
         cleanup
-        exit 1
+        exit 1 || return 1
     fi
     echo "SHA256 OK"
 }
@@ -207,7 +209,7 @@ update_script() {
     new_version=$(extract_new_version)
     if [ -z "$new_version" ]; then
         echo "Nie udało się odczytać wersji."
-        exit 1
+        exit 1 || return 1
     fi
     echo "Aktualna wersja : $VERSION"
     echo "Nowa wersja     : $new_version"
@@ -216,11 +218,11 @@ update_script() {
     # ==============================================
     if [ "$new_version" = "$VERSION" ]; then
         echo "Skrypt jest aktualny."
-        exit 0
+        exit 0 || return 0
     fi
     if ! version_greater "$new_version" "$VERSION"; then
         echo "Nowa wersja NIE jest nowsza."
-        exit 0
+        exit 0 || return 0
     fi
     echo "Wykryto nową wersję."
     # ==============================================
@@ -251,7 +253,7 @@ check_directory_path () {
         echo "    Expected path: $1/"
         echo "  Edit the '$2' in settings file and try again."
         echo
-        exit 1
+        exit 1 || return 1
     fi 
 }
 

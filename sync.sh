@@ -49,7 +49,7 @@ local_rotate_dir="rotate/"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.3"
+VERSION="1.0.4"
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
 SHA256_URL="${UPDATE_URL}.sha256"
@@ -215,8 +215,17 @@ update_script() {
     # SemVer
     # ==============================================
     if [ "$new_version" = "$VERSION" ]; then
-        echo "Skrypt jest aktualny."
-        exit 0 || return 0
+        local current_script_hash
+        local server_script_hash
+        current_script_hash=$(sha256sum "$SCRIPT_PATH" | cut -d' ' -f1)
+        server_script_hash=$(sha256sum "$TMP_FILE" | cut -d' ' -f1)
+        if [ "$current_script_hash" != "$server_script_hash" ]; then
+            echo "Deklarowana wersja skryptów: lokalnego i z serwera jest taka sama, ale różnią się zawartością. Możliwe, że aktualizacja została wydana bez zmiany numeru wersji lub lokalny skrypt został zmodyfikowany. Przerywam aktualizację."
+            exit 1 || return 1
+        else
+            echo "Skrypt jest aktualny."
+            exit 0 || return 0
+        fi
     fi
     if ! version_greater "$new_version" "$VERSION"; then
         echo "Skrypt lokalny jest nowszy niż dostępna aktualizacja. Przerywam aktualizację."

@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.1"
+VERSION="1.1.2"
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
 SHA256_URL="${UPDATE_URL}.sha256"
@@ -820,7 +820,7 @@ help-script() {
     echo "  To set up a new project, run 'sync.sh init <project_name>'. This will create"
     echo "a new directory with the given name and a configuration file inside it. Now you,"
     echo "can download files from specific server. If you want edit files locally and then"
-    echo "upload them to the server, you have to run 'sync.sh init-deploy <project_name>'"
+    echo "upload them to the server, you have to run 'sync.sh backup-deploy <project_name>'"
     echo "after initializing the project. This will create a local deploy directory where"
     echo "you can edit files before deploying them to the server."
     echo 

@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.0"
+VERSION="1.1.1"
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
 SHA256_URL="${UPDATE_URL}.sha256"
@@ -799,12 +799,12 @@ help-script() {
     echo
     echo "  sync.sh  help                - show this help message"
     echo "  sync.sh  init  <dir>         - initialize new project with given name,"
-    echo "  sync.sh  init-deploy <dir>   - add deploy functionality to existing project,"
     echo "  sync.sh  backup <dir> [args] - download files from server to local directory;"
     echo "                                 (backup); pass optional args for rsync"
+    echo "  sync.sh  backup-deploy <dir> - copy backup files into deploy directory;"
     echo "  sync.sh  deploy <dir> [args] - upload files from local directory to server;"
     echo "                                 (deploy); pass optional args for rsync" 
-    echo "  sync.sh  reinit-deploy       - copy backup files into deploy directory"
+    echo "  sync.sh  git-deploy          - copy git repository files into deploy directory"
     echo "                                 (will overwrite existing ones);"
     echo "  sync.sh  clone <dir>         - init + init-deploy equivalent;"
     echo "  sync.sh  rotate <dir>        - make project copy (both backup and deploy directories)"

@@ -44,7 +44,7 @@ local_rotate_dir="rotate/"
 
 ### This is the base path for your local Git repository you want to deploy.
 # It should be path out of this project directory.
-local_repository_base_path="~/projects/sh-stack-pl.github.io/"
+local_repository_base_path="~/projects/repo/"
 
 ### This is the path to the directory in your local repository where files to be deployed are located.
 # Leave it empty if you want to deploy files from the root of the repository, 
@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.2"
+VERSION="1.1.3"
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
 SHA256_URL="${UPDATE_URL}.sha256"

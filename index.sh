@@ -6,7 +6,8 @@
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.0"
+VERSION="1.0.1"
+DESCRIPTION="Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums."
 
 UPDATE_URL="https://sh.stack.pl/index.sh"
 SHA256_URL="${UPDATE_URL}.sha256"
@@ -223,27 +224,124 @@ generate() {
         print "        margin: 20px;"
         print "      }"
         print "      h1 {"
-        print "        color: #333;"
+        print "         color: #333;"
         print "      }"
-        print "      ul {"
-        print "        list-style-type: square;"
+        print "      p {"
+        print "       font-size: 16px;"
+        print "        color: #555;"
+        print "      }"
+
+        print "      ul.scripts-list {"
+        print "        list-style: none;"
+        print "        padding: 0;"
+        print "        margin: 12px 0;"
+        print "        border: 1px solid #e6e6e6;"
+        print "        border-radius: 6px;"
+        print "        overflow: hidden;"
+        print "        background: #fff;"
+        print "      }"
+
+        print "      ul.scripts-list .row {"
+        print "        display: grid;"
+        print "        grid-template-columns: 220px 1fr 340px;"
+        print "        gap: 12px;"
+        print "        align-items: center;"
+        print "        padding: 10px 12px;"
+        print "      }"
+
+        print "      ul.scripts-list .row.header {"
+        print "        background: #f7f7f7;"
+        print "        font-weight: 700;"
+        print "        color: #222;"
+        print "      }"
+
+        print "      /* Odstęp między wierszami */"
+        print "      ul.scripts-list .row + .row {"
+        print "        border-top: 1px solid #f0f0f0;"
+        print "      }"
+
+        print "      ul.scripts-list a {"
+        print "        color: #0066cc;"
+        print "        text-decoration: none;"
+        print "      }"
+
+        print "      ul.scripts-list a:hover {"
+        print "        text-decoration: underline;"
+        print "      }"
+
+        print "      .col.sha code {"
+        print "        font-family: \"SFMono-Regular\", Consolas, \"Liberation Mono\", monospace;"
+        print "        font-size: 0.95em;"
+        print "        color: #333;"
+        print "        word-break: break-all;"
+        print "      }"
+
+        print "      /* Małe urządzenia: dopasuj kolumny */"
+        print "      @media (max-width: 700px) {"
+        print "        ul.scripts-list .row {"
+        print "          grid-template-columns: 1fr;"
+        print "          gap: 6px;"
+        print "          padding: 8px 10px;"
+        print "        }"
+        print "        ul.scripts-list .row.header {"
+        print "          display: none;"
+        print "        }"
         print "      }"
         print "    </style>"
         print "  </head>"
         print "  <body>"
         print "    <p>"
-        print "      stack.pl operational facilities (public part)"
+        print "      stack.pl operational facilities"
         print "    </p>"
-        print "    <p>"
-        print "      Those are script files I usually use in my projects."
-        print "      <ul>"
+        print "    Those are script files I usually use in my projects."
+        print "    <ul class=\"scripts-list\" role=\"table\" aria-label=\"Script files\">"
+        print "      <li class=\"row header\" role=\"row\">"
+        print "        <span class=\"col name\" role=\"columnheader\">Script</span>"
+        print "        <span class=\"col desc\" role=\"columnheader\">Description</span>"
+        print "        <span class=\"col sha\" role=\"columnheader\">SHA-256</span>"
+        print "      </li>"
     }
     {
-        print "        <li><a href=\"" $0 "\">" $0 "</a></li>"
+        n=split($0, pathArray, "/")
+        name=pathArray[n]
+        cmdresult="";
+        cmd="sha256sum " $0 " 2>/dev/null";
+        if ( (cmd | getline line) > 0 ){
+            cmdresult=line
+            close(cmd)
+        }
+        split(cmdresult, row, " ");
+        digest=row[1]
+        cmd="echo \047" cmdresult "\047> " name ".sha256" ;
+        system(cmd);
+        cmdresult="";
+        cmd="grep ^VERSION= " name " | head -n1 | cut -d\047\042\047 -f2" ;
+        if ( (cmd | getline line) > 0 ){
+            cmdresult=line
+            close(cmd)
+        }
+        version="";
+        if ( cmdresult != "" ) {
+            version=" (v" cmdresult ")"
+        }
+        cmdresult="";
+        cmd="grep ^DESCRIPTION= " name " | head -n1 | cut -d\047\042\047 -f2" ;
+        if ( (cmd | getline line) > 0 ){
+            cmdresult=line
+            close(cmd)
+        }
+        description="";
+        if ( cmdresult != "" ) {
+            description=cmdresult
+        }
+        print "      <li class=\"row\" role=\"row\">"
+        print "        <a class=\"col name\" role=\"cell\" href=\" " name " \">" name "</a>"
+        print "        <span class=\"col desc\" role=\"cell\">" version, description "</span>"
+        print "        <span class=\"col sha\" role=\"cell\"><code>" digest "</code></span>"
+        print "      </li>"
     } 
     END {
-        print "      </ul>"
-        print "    </p>"
+        print "    </ul>"
         print "  </body>"
         print "</html>"
     }
@@ -252,7 +350,7 @@ generate() {
 }
 
 help-script() {
-    echo "Usage: index.sh [ { init | init-deploy | backup | deploy } <dir> | help ]"
+    echo "Usage: index.sh [ help | generate | update | version ]"
     echo
     echo "  index.sh  help                - show this help message"
     echo "  index.sh  generate            - create new index.html file with links to" 
@@ -262,8 +360,7 @@ help-script() {
     echo "  index.sh  version             - show script version"
     echo 
     echo "DESCRIPTION:"
-    echo "  This script is a wrapper around rsync and SSH for synchronizing files"
-    echo "between a local directory and a remote server."
+    echo "  $DESCRIPTION"
     echo 
     echo
     echo "  Dariusz Chilimoniuk, https://stack.pl"
@@ -286,7 +383,7 @@ case "${1:-}" in
         help-script
         ;;
     *)
-        echo "sync.sh is rsync+ssh wrapper for file synchronization."
+        echo "$DESCRIPTION"
         echo
         echo "Run  'sync.sh help'  for usage instructions"
         echo

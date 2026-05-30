@@ -9,23 +9,84 @@
         margin: 20px;
       }
       h1 {
-        color: #333;
+         color: #333;
       }
-      ul {
-        list-style-type: square;
+      p {
+       font-size: 16px;
+        color: #555;
+      }
+      ul.scripts-list {
+        list-style: none;
+        padding: 0;
+        margin: 12px 0;
+        border: 1px solid #e6e6e6;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #fff;
+      }
+      ul.scripts-list .row {
+        display: grid;
+        grid-template-columns: 220px 1fr 340px;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+      }
+      ul.scripts-list .row.header {
+        background: #f7f7f7;
+        font-weight: 700;
+        color: #222;
+      }
+      /* Odstęp między wierszami */
+      ul.scripts-list .row + .row {
+        border-top: 1px solid #f0f0f0;
+      }
+      ul.scripts-list a {
+        color: #0066cc;
+        text-decoration: none;
+      }
+      ul.scripts-list a:hover {
+        text-decoration: underline;
+      }
+      .col.sha code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.95em;
+        color: #333;
+        word-break: break-all;
+      }
+      /* Małe urządzenia: dopasuj kolumny */
+      @media (max-width: 700px) {
+        ul.scripts-list .row {
+          grid-template-columns: 1fr;
+          gap: 6px;
+          padding: 8px 10px;
+        }
+        ul.scripts-list .row.header {
+          display: none;
+        }
       }
     </style>
   </head>
   <body>
     <p>
-      stack.pl operational facilities (public part)
+      stack.pl operational facilities
     </p>
-    <p>
-      Those are script files I usually use in my projects.
-      <ul>
-        <li><a href="./index.sh">./index.sh</a></li>
-        <li><a href="./sync.sh">./sync.sh</a></li>
-      </ul>
-    </p>
+    Those are script files I usually use in my projects.
+    <ul class="scripts-list" role="table" aria-label="Script files">
+      <li class="row header" role="row">
+        <span class="col name" role="columnheader">Script</span>
+        <span class="col desc" role="columnheader">Description</span>
+        <span class="col sha" role="columnheader">SHA-256</span>
+      </li>
+      <li class="row" role="row">
+        <a class="col name" role="cell" href=" index.sh ">index.sh</a>
+        <span class="col desc" role="cell"> (v1.0.1) Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums.</span>
+        <span class="col sha" role="cell"><code>cad9247d0b2e8b1035e9ea8fc4d3a5be9521e1a36f0a39cb8b8638934b9416b1</code></span>
+      </li>
+      <li class="row" role="row">
+        <a class="col name" role="cell" href=" sync.sh ">sync.sh</a>
+        <span class="col desc" role="cell"> (v1.1.4) Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate.</span>
+        <span class="col sha" role="cell"><code>2d7b9f1047fdded57bc165bcc5c092aea93638f82d3fd4cf1cd5d3b5f339f6d0</code></span>
+      </li>
+    </ul>
   </body>
 </html>

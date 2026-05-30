@@ -6,7 +6,7 @@
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.1"
+VERSION="1.0.2"
 DESCRIPTION="Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums."
 
 UPDATE_URL="https://sh.stack.pl/index.sh"
@@ -243,7 +243,7 @@ generate() {
 
         print "      ul.scripts-list .row {"
         print "        display: grid;"
-        print "        grid-template-columns: 220px 1fr 340px;"
+        print "        grid-template-columns: 150px 1fr 150px;"
         print "        gap: 12px;"
         print "        align-items: center;"
         print "        padding: 10px 12px;"
@@ -293,10 +293,9 @@ generate() {
         print "    <p>"
         print "      stack.pl operational facilities"
         print "    </p>"
-        print "    Those are script files I usually use in my projects."
         print "    <ul class=\"scripts-list\" role=\"table\" aria-label=\"Script files\">"
         print "      <li class=\"row header\" role=\"row\">"
-        print "        <span class=\"col name\" role=\"columnheader\">Script</span>"
+        print "        <span class=\"col name\" role=\"columnheader\">Tool</span>"
         print "        <span class=\"col desc\" role=\"columnheader\">Description</span>"
         print "        <span class=\"col sha\" role=\"columnheader\">SHA-256</span>"
         print "      </li>"
@@ -322,7 +321,7 @@ generate() {
         }
         version="";
         if ( cmdresult != "" ) {
-            version=" (v" cmdresult ")"
+            version=cmdresult
         }
         cmdresult="";
         cmd="grep ^DESCRIPTION= " name " | head -n1 | cut -d\047\042\047 -f2" ;
@@ -335,8 +334,8 @@ generate() {
             description=cmdresult
         }
         print "      <li class=\"row\" role=\"row\">"
-        print "        <a class=\"col name\" role=\"cell\" href=\" " name " \">" name "</a>"
-        print "        <span class=\"col desc\" role=\"cell\">" version, description "</span>"
+        print "        <a class=\"col name\" role=\"cell\" href=\" " name " \" title=\""name " " version "\">" name "</a>"
+        print "        <span class=\"col desc\" role=\"cell\">" description "</span>"
         print "        <span class=\"col sha\" role=\"cell\"><code>" digest "</code></span>"
         print "      </li>"
     } 

@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.6"
+VERSION="1.1.7"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -194,13 +194,13 @@ verify_checksum() {
     expected_hash=$(cut -d' ' -f1 "$TMP_HASH")
     actual_hash=$(sha256sum "$TMP_FILE" | cut -d' ' -f1)
     if [ "$expected_hash" != "$actual_hash" ]; then
-        echo "BŁĄD: suma SHA256 jest niepoprawna."
+        echo "ERROR: incorrect sha256 sum."
         echo "Expected : $expected_hash"
         echo "Actual   : $actual_hash"
         cleanup
         exit 1 || return 1
     fi
-    echo "SHA256 OK"
+    echo "CHECKSUM OK"
 }
 
 # ==================================================
@@ -878,6 +878,41 @@ help-script() {
     echo "  Dariusz Chilimoniuk, https://stack.pl , https://github.com/stack-pl/sync "
     echo
 }
+ask() {
+    if [[ $1 == 'yes' ]]; then 
+        read -p "Continue? [yes/NO]: " -r
+        echo 
+        if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
+        then
+            [[ "$0" = "$BASH_SOURCE" ]] && \
+            echo -e "Cancelled" && \
+            exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+        fi  
+    else
+        [[ "$0" = "$BASH_SOURCE" ]] && \
+        echo -e "Cancelled" && \
+        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    fi
+
+}
+self_install() {
+    currentdir=$(pwd)
+    scriptfile="sync.sh"
+    echo
+    echo "Self installation starting..."
+    echo
+    echo "Downloading script:"
+    echo "  "$UPDATE_URL
+    echo "into"
+    echo "  "$currentdir/$scriptfile
+    download_files
+    verify_checksum
+    echo cp $TMP_FILE $currentdir/$scriptfile
+    cp $TMP_FILE $currentdir/$scriptfile
+    echo chmod +x $currentdir/$scriptfile
+    chmod +x $currentdir/$scriptfile
+    echo "Done"
+}
 ###### MAIN LOGIC ######
 
 case "${1:-}" in
@@ -922,9 +957,14 @@ case "${1:-}" in
         print_version
         ;;
     *)
-        echo "sync.sh is rsync+ssh wrapper for file synchronization."
-        echo
-        echo "Run  'sync.sh help'  for usage instructions"
-        echo
+        if [[ ! -n "$BASH_SOURCE" ]] && [[ ! "$0" = "$BASH_SOURCE" ]] && [[ -p "/dev/stdin" ]]; then
+            echo "Running from pipeline..."
+            self_install
+        else
+            echo "sync.sh is rsync+ssh wrapper for file synchronization." 
+            echo
+            echo "Run  'sync.sh help'  for usage instructions"
+            echo
+        fi
         ;;
 esac

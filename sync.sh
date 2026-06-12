@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.4"
+VERSION="1.1.5"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -692,6 +692,50 @@ rotate() {
         echo "Backup rotated: $project_name/$local_rotate_dir$timestamp/$local_deploy_dir"
     fi
 }
+
+clear-metadata() {
+
+    if [[ ! $(which exiftool) ]]; then
+        [[ "$0" = "$BASH_SOURCE" ]] && \
+        echo "Exiftool not found. Please install \"exiftool\" to enable this feature." && \
+        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    fi
+
+
+    project_name=${1%/}
+    if [[ ! -n "$project_name" ]]; then
+        echo "Please provide a project name. Example: sync.sh clear-metadata my_project"
+        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    fi
+
+    load_config
+
+    echo "WARNING: This will permanently remove all metadata in:"
+    echo "  '$project_name/$local_deploy_dir'."
+    echo
+    echo "****** ExifTool ****** ( deploy directory ) ******"
+    echo exiftool -all= -r "$project_name/$local_deploy_dir" \
+            -overwrite_original_in_place \
+            -i SYMLINKS
+    echo "**************************************************"
+    echo
+    read -p "Continue? [yes/NO]: " -r
+    echo 
+    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
+    then
+        [[ "$0" = "$BASH_SOURCE" ]] && \
+        echo -e "Cancelled. No files changed" && \
+        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    fi
+
+    exiftool -all= -r "$project_name/$local_deploy_dir" \
+        -overwrite_original_in_place \
+        -i SYMLINKS
+
+    echo "Done."
+    echo "You can now run 'sync.sh deploy $project_name' to upload files to the server."
+}
+
 status() {
     project_name=${1%/}
     if [[ ! -n "$project_name" ]]; then
@@ -798,20 +842,22 @@ status() {
 help-script() {
     echo "Usage: sync.sh [ { init | init-deploy | backup | deploy } <dir> | help ]"
     echo
-    echo "  sync.sh  help                - show this help message"
-    echo "  sync.sh  init  <dir>         - initialize new project with given name,"
-    echo "  sync.sh  backup <dir> [args] - download files from server to local directory;"
-    echo "                                 (backup); pass optional args for rsync"
-    echo "  sync.sh  backup-deploy <dir> - copy backup files into deploy directory;"
-    echo "  sync.sh  deploy <dir> [args] - upload files from local directory to server;"
-    echo "                                 (deploy); pass optional args for rsync" 
-    echo "  sync.sh  git-deploy          - copy git repository files into deploy directory"
-    echo "                                 (will overwrite existing ones);"
-    echo "  sync.sh  clone <dir>         - init + init-deploy equivalent;"
-    echo "  sync.sh  rotate <dir>        - make project copy (both backup and deploy directories)"
-    echo "  sync.sh  status  <dir>       - show project info and settings"
-    echo "  sync.sh  update              - update this script to the latest version"
-    echo "  sync.sh  version             - show script version"
+    echo "  sync.sh  help                 - show this help message"
+    echo "  sync.sh  init  <dir>          - initialize new project with given name,"
+    echo "  sync.sh  backup <dir> [args]  - download files from server to local directory;"
+    echo "                                  (backup); pass optional args for rsync"
+    echo "  sync.sh  backup-deploy <dir>  - copy backup files into deploy directory;" 
+    echo "  sync.sh  git-deploy           - copy git repository files into deploy directory"
+    echo "                                  (will overwrite existing ones);"
+    echo "  sync.sh  clone <dir>          - init + backup-deploy equivalent;"
+    echo "  sync.sh  clear-metadata <dir> - clear meta information from files in deploy directory"
+    echo "                                  (overwrites files; requires exiftool)"
+    echo "  sync.sh  deploy <dir> [args]  - upload files from local directory to server;"
+    echo "                                  (deploy); pass optional args for rsync"
+    echo "  sync.sh  rotate <dir>         - make project copy (both backup and deploy directories)"
+    echo "  sync.sh  status  <dir>        - show project info and settings"
+    echo "  sync.sh  update               - update this script to the latest version"
+    echo "  sync.sh  version              - show script version"
     echo 
     echo "DESCRIPTION:"
     echo "  This script is a wrapper around rsync and SSH for synchronizing files"
@@ -847,6 +893,9 @@ case "${1:-}" in
         backup-deploy $2
         rotate $2
         status $2
+        ;;
+    clear-metadata)
+        clear-metadata $2
         ;;
     deploy)
         deploy $2 $3 $4 $5 $6 $7 $8 $9

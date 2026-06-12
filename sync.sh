@@ -8,14 +8,14 @@
 
 # Remote SSH host (it can be an IP address, a domain name, 
 # or a hostname defined in your SSH config).
-remote_ssh_host="do1"
+remote_ssh_host="servername"
 
 # Remote SSH user
 remote_ssh_user="root"
 
 # Remote rsync directory (note the trailing slash)
 # Full path to the directory on the remote server where you want to sync files.
-remote_dir="/var/www/h1.stack.pl/"
+remote_dir="/var/www/example.com/"
 
 # Remote files ownership settings. Files deployed to the server will be owned by this user.
 remote_files_owner=$remote_ssh_user
@@ -44,7 +44,7 @@ local_rotate_dir="rotate/"
 
 ### This is the base path for your local Git repository you want to deploy.
 # It should be path out of this project directory.
-local_repository_base_path="~/projects/repo/"
+local_repository_base_path="~/projects/examplerepo/"
 
 ### This is the path to the directory in your local repository where files to be deployed are located.
 # Leave it empty if you want to deploy files from the root of the repository, 
@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.5"
+VERSION="1.1.6"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"

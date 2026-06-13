@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.8"
+VERSION="1.1.9"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -901,7 +901,8 @@ ask() {
 
 }
 self_install() {
-    installdir="$HOME/.local/bin"
+    installdir1="$HOME/bin"
+    installdir2="$HOME/.local/bin"
     currentdir=$(pwd)
     scriptfile="sync.sh"
     echo
@@ -913,19 +914,33 @@ self_install() {
     echo "  "$installdir/$scriptfile
     download_files
     verify_checksum
-    if [[ ! ":$PATH:" == *":$installdir:"* ]]; then
-        echo "Your PATH is missing $installdir, you might want to add it."
-        echo "For example, put this line below into your ~/.bashrc file:"
-        echo
-        echo "export PATH=\$PATH:$HOME/.local/bin"
-        echo
+    installdir=""
+    echo "Looking for user's 'bin' directory in most common paths..."
+    if [[ ! ":$PATH:" == *":$installdir1:"* ]]; then
+        echo "  $installdir1 not found in PATH"
+        if [[ ! ":$PATH:" == *":$installdir2:"* ]]; then
+            echo "  $installdir2 not found in PATH"
+            echo
+            echo "  Your \$PATH does not contain usually used 'bin' paths"
+            echo "  Navigate to ~/.bashrc and edit this file:"
+            echo "  add ~/bin directory":
+            echo "export PATH=\$PATH:$installdir1"
+            echo "  or add ~/.local/bin directory":
+            echo "export PATH=\$PATH:$installdir1"
+            echo "  then restart terminal and run installation again"
+        else
+            installdir=$installdir2
+        fi
+    else
+        installdir=$installdir1
     fi
+
     if [[ ! -d $installdir ]]; then
         echo_cmd mkdir -p $installdir
+        echo_cmd cp $TMP_FILE $installdir/$scriptfile
+        echo_cmd chmod +x $installdir/$scriptfile
+        echo "Done"
     fi
-    echo_cmd cp $TMP_FILE $installdir/$scriptfile
-    echo_cmd chmod +x $installdir/$scriptfile
-    echo "Done"
 }
 ###### MAIN LOGIC ######
 

@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.7"
+VERSION="1.1.8"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -75,6 +75,11 @@ BACKUP_PATH="${SCRIPT_PATH}.bak"
 LOCK_FILE="/tmp/${SCRIPT_NAME}.lock"
 TMP_FILE="$(mktemp)"
 TMP_HASH="$(mktemp)"
+
+echo_cmd() {
+    echo "+ $@"
+    "$@"
+}
 
 # ==================================================
 # Cleanup
@@ -169,15 +174,15 @@ print_version() {
 # Pobieranie
 # ==================================================
 download_files() {
-    echo curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
-    curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
+    # echo curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
+    echo_cmd curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
     if [ $? -ne 0 ]; then
         echo "BŁĄD: Nie można pobrać aktualizacji z $UPDATE_URL"
         cleanup
         exit 1 || return 1
     fi
-    echo curl -fsSL "$SHA256_URL" -o "$TMP_HASH"
-    curl -fsSL "$SHA256_URL" -o "$TMP_HASH"
+    # echo curl -fsSL "$SHA256_URL" -o "$TMP_HASH"
+    echo_cmd curl -fsSL "$SHA256_URL" -o "$TMP_HASH"
     if [ $? -ne 0 ]; then
         echo "BŁĄD: Nie można pobrać sumy kontrolnej z $SHA256_URL"
         cleanup
@@ -896,6 +901,7 @@ ask() {
 
 }
 self_install() {
+    installdir="$HOME/.local/bin"
     currentdir=$(pwd)
     scriptfile="sync.sh"
     echo
@@ -904,13 +910,21 @@ self_install() {
     echo "Downloading script:"
     echo "  "$UPDATE_URL
     echo "into"
-    echo "  "$currentdir/$scriptfile
+    echo "  "$installdir/$scriptfile
     download_files
     verify_checksum
-    echo cp $TMP_FILE $currentdir/$scriptfile
-    cp $TMP_FILE $currentdir/$scriptfile
-    echo chmod +x $currentdir/$scriptfile
-    chmod +x $currentdir/$scriptfile
+    if [[ ! ":$PATH:" == *":$installdir:"* ]]; then
+        echo "Your PATH is missing $installdir, you might want to add it."
+        echo "For example, put this line below into your ~/.bashrc file:"
+        echo
+        echo "export PATH=\$PATH:$HOME/.local/bin"
+        echo
+    fi
+    if [[ ! -d $installdir ]]; then
+        echo_cmd mkdir -p $installdir
+    fi
+    echo_cmd cp $TMP_FILE $installdir/$scriptfile
+    echo_cmd chmod +x $installdir/$scriptfile
     echo "Done"
 }
 ###### MAIN LOGIC ######

@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.9"
+VERSION="1.1.10"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -267,6 +267,7 @@ update_script() {
     cp "$TMP_FILE" "$SCRIPT_PATH"
     chmod +x "$SCRIPT_PATH"
     trap - ERR
+    rm "$BACKUP_PATH"
     echo "Aktualizacja zakończona sukcesem."
 }
 
@@ -423,29 +424,29 @@ init() {
     echo "Project '$project_name' initialized successfully."
     echo
     echo "You can now download files from the server by running:"
-    echo "     $ './sync.sh backup $project_name' "
+    echo "     $ 'sync.sh backup $project_name' "
     echo "New files will be saved in "
     echo "     $project_name/$local_backup_dir"
     echo
     echo "In case you want to edit files locally and then upload them to the server, run:"
-    echo "     $ './sync.sh init-deploy $project_name'"
+    echo "     $ 'sync.sh init-deploy $project_name'"
     echo "to prepare working folder "
     echo "     $project_name/$local_deploy_dir"
     echo "then edit files there and when ready, run:"
-    echo "     './sync.sh deploy $project_name'  to upload files to the server."
+    echo "     'sync.sh deploy $project_name'  to upload files to the server."
     echo 
     echo "If you want to deploy files from a local Git repository, you can run:"
-    echo "     $ './sync.sh git-deploy $project_name' "
+    echo "     $ 'sync.sh git-deploy $project_name' "
     echo "This will copy files from the specified $local_repository_branch branch of:"
     echo "     git: $local_repository_base_path"
     echo "and place them in the local deploy directory:"
     echo "     $project_name/$local_deploy_dir"
     echo "Use then:"
-    echo "     './sync.sh deploy $project_name'  to upload files to the server."
+    echo "     'sync.sh deploy $project_name'  to upload files to the server."
     echo
     echo "You can also add extra rsync options to the backup and deploy commands."
     echo "For example, to delete files on the server that are not in the local deploy directory, you can run:"
-    echo "     $ './sync.sh deploy $project_name --delete' "
+    echo "     $ 'sync.sh deploy $project_name --delete' "
     echo
 }
 backup-deploy() {
@@ -845,28 +846,30 @@ status() {
 }
 
 help-script() {
-    echo "Usage: sync.sh [ { init | init-deploy | backup | deploy } <dir> | help ]"
     echo
-    echo "  sync.sh  help                 - show this help message"
-    echo "  sync.sh  init  <dir>          - initialize new project with given name,"
-    echo "  sync.sh  backup <dir> [args]  - download files from server to local directory;"
-    echo "                                  (backup); pass optional args for rsync"
-    echo "  sync.sh  backup-deploy <dir>  - copy backup files into deploy directory;" 
-    echo "  sync.sh  git-deploy           - copy git repository files into deploy directory"
-    echo "                                  (will overwrite existing ones);"
-    echo "  sync.sh  clone <dir>          - init + backup-deploy equivalent;"
-    echo "  sync.sh  clear-metadata <dir> - clear meta information from files in deploy directory"
-    echo "                                  (overwrites files; requires exiftool)"
-    echo "  sync.sh  deploy <dir> [args]  - upload files from local directory to server;"
-    echo "                                  (deploy); pass optional args for rsync"
-    echo "  sync.sh  rotate <dir>         - make project copy (both backup and deploy directories)"
-    echo "  sync.sh  status  <dir>        - show project info and settings"
-    echo "  sync.sh  update               - update this script to the latest version"
-    echo "  sync.sh  version              - show script version"
-    echo 
-    echo "DESCRIPTION:"
     echo "  This script is a wrapper around rsync and SSH for synchronizing files"
     echo "between a local directory and a remote server."
+    echo 
+    echo "USAGE:"
+    echo " sync.sh COMMAND [ PARAMS ]"
+    echo
+    echo "COMMAND:"
+    echo "   help                 - show this help message"
+    echo "   init <dir>           - initialize empty project with given name,"
+    echo "   backup <dir> [args]  - download files from server to local directory;"
+    echo "                          (backup); pass optional args for rsync"
+    echo "   backup-deploy <dir>  - copy backup files into deploy directory;" 
+    echo "   git-deploy           - copy git repository files into deploy directory"
+    echo "                          (will overwrite existing ones);"
+    echo "   clone <dir>          - init + backup-deploy equivalent;"
+    echo "   clear-metadata <dir> - clear meta information from files in deploy directory"
+    echo "                          (overwrites files; requires exiftool)"
+    echo "   deploy <dir> [args]  - upload files from local directory to server;"
+    echo "                          (deploy); pass optional args for rsync"
+    echo "   rotate <dir>         - make project copy (both backup and deploy directories)"
+    echo "   status <dir>         - show project info and settings"
+    echo "   update               - update this script to the latest version"
+    echo "   version              - show script version"
     echo 
     echo "SETUP:"
     echo "  To set up a new project, run 'sync.sh init <project_name>'. This will create"
@@ -910,17 +913,11 @@ self_install() {
     echo
     echo "Downloading script:"
     echo "  "$UPDATE_URL
-    echo "into"
-    echo "  "$installdir/$scriptfile
     download_files
     verify_checksum
     installdir=""
-    echo "Looking for user's 'bin' directory in most common paths..."
-    if [[ ! ":$PATH:" == *":$installdir1:"* ]]; then
-        echo "  $installdir1 not found in PATH"
-        if [[ ! ":$PATH:" == *":$installdir2:"* ]]; then
-            echo "  $installdir2 not found in PATH"
-            echo
+    if [[  ":$PATH:" == *":$installdir1:"* ]]; then
+        if [[  ":$PATH:" == *":$installdir2:"* ]]; then
             echo "  Your \$PATH does not contain usually used 'bin' paths"
             echo "  Navigate to ~/.bashrc and edit this file:"
             echo "  add ~/bin directory":
@@ -928,6 +925,9 @@ self_install() {
             echo "  or add ~/.local/bin directory":
             echo "export PATH=\$PATH:$installdir1"
             echo "  then restart terminal and run installation again"
+            [[ "$0" = "$BASH_SOURCE" ]] && \
+            echo -e "Cancelled" && \
+            exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
         else
             installdir=$installdir2
         fi
@@ -935,11 +935,13 @@ self_install() {
         installdir=$installdir1
     fi
 
-    if [[ ! -d $installdir ]]; then
+    if [[ -n $installdir ]]; then
+        echo "Installing script in $installdir/$scriptfile"
         echo_cmd mkdir -p $installdir
         echo_cmd cp $TMP_FILE $installdir/$scriptfile
         echo_cmd chmod +x $installdir/$scriptfile
-        echo "Done"
+        echo
+        echo "Done. Invoke 'sync.sh help' for more infrmation"
     fi
 }
 ###### MAIN LOGIC ######

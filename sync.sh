@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.11"
+VERSION="1.1.12"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -281,7 +281,7 @@ check_directory_path () {
         echo "    Expected path: $1/"
         echo "  Edit the '$2' in settings file and try again."
         echo
-        exit 1 || return 1
+        exit 1
     fi 
 }
 
@@ -305,7 +305,7 @@ load_config() {
     if [[ ! -f $config_file ]]; then
         echo "Configuration file '$config_file' does not exist. "
         echo "Please initialize the project first using:  'sync.sh init $project_name'"
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+        exit 1
     fi
     source "$config_file"
 }
@@ -315,15 +315,15 @@ init() {
 
     if [[ ! -n "$project_name" ]]; then
         echo "Please provide a project name as the second argument. Example: sync.sh init my_project"
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+        exit 1
     fi
     if [[ -d $project_name ]]; then
         echo "Directory '$project_name' already exists. Please choose a different name or remove it before initializing."
-        exit 1 || return 1
+        exit 1
     fi
     if [[ -f $project_name ]]; then
         echo "File '$project_name' already exists. Please choose a different name or remove it before initializing."
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+        exit 1
     fi
     
     echo "You are initializing new directory '$project_name' for remote sychronization:"
@@ -941,7 +941,7 @@ self_install() {
         echo_cmd cp $TMP_FILE $installdir/$scriptfile
         echo_cmd chmod +x $installdir/$scriptfile
         echo
-        echo "Done. Invoke 'sync.sh help' for more infrmation"
+        echo "Done. Invoke 'sync.sh' for more information"
     fi
 }
 ###### MAIN LOGIC ######
@@ -989,7 +989,8 @@ case "${1:-}" in
         ;;
     *)
         if [[ ! -n "$BASH_SOURCE" ]] && [[ ! "$0" = "$BASH_SOURCE" ]] && [[ -p "/dev/stdin" ]]; then
-            echo "Running from pipeline..."
+            # Install from official URL: curl -LsSf https://sh.stack.pl/sync.sh | sh
+            # Pretend to installation: cat ./sync.sh | sh
             self_install
         else
             help-script

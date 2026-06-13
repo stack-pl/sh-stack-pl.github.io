@@ -65,7 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.10"
+VERSION="1.1.11"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -846,45 +846,47 @@ status() {
 }
 
 help-script() {
-    echo
-    echo "  This script is a wrapper around rsync and SSH for synchronizing files"
-    echo "between a local directory and a remote server."
-    echo 
-    echo "USAGE:"
-    echo " sync.sh COMMAND [ PARAMS ]"
-    echo
-    echo "COMMAND:"
-    echo "   help                 - show this help message"
-    echo "   init <dir>           - initialize empty project with given name,"
-    echo "   backup <dir> [args]  - download files from server to local directory;"
-    echo "                          (backup); pass optional args for rsync"
-    echo "   backup-deploy <dir>  - copy backup files into deploy directory;" 
-    echo "   git-deploy           - copy git repository files into deploy directory"
-    echo "                          (will overwrite existing ones);"
-    echo "   clone <dir>          - init + backup-deploy equivalent;"
-    echo "   clear-metadata <dir> - clear meta information from files in deploy directory"
-    echo "                          (overwrites files; requires exiftool)"
-    echo "   deploy <dir> [args]  - upload files from local directory to server;"
-    echo "                          (deploy); pass optional args for rsync"
-    echo "   rotate <dir>         - make project copy (both backup and deploy directories)"
-    echo "   status <dir>         - show project info and settings"
-    echo "   update               - update this script to the latest version"
-    echo "   version              - show script version"
-    echo 
-    echo "SETUP:"
-    echo "  To set up a new project, run 'sync.sh init <project_name>'. This will create"
-    echo "a new directory with the given name and a configuration file inside it. Now you,"
-    echo "can download files from specific server. If you want edit files locally and then"
-    echo "upload them to the server, you have to run 'sync.sh backup-deploy <project_name>'"
-    echo "after initializing the project. This will create a local deploy directory where"
-    echo "you can edit files before deploying them to the server."
-    echo 
-    echo "WARNING:"
-    echo "  Use this script responsibly and make sure you have backups of your data"
-    echo "before deploying changes to the server."
-    echo
-    echo "  Dariusz Chilimoniuk, https://stack.pl , https://github.com/stack-pl/sync "
-    echo
+  echo
+  echo "  This script is a wrapper around rsync and SSH for synchronizing files"
+  echo "between a local directory and a remote server."
+  echo 
+  echo "USAGE:"
+  echo " sync.sh COMMAND [ PARAMS ]"
+  echo
+  echo "COMMAND:"
+  echo "   help                 - show this help message"
+  echo "   init <dir>           - initialize empty project with given name,"
+  echo "   backup <dir> [args]  - download files from server to local directory;"
+  echo "                          (backup); pass optional args for rsync"
+  echo "   backup-deploy <dir>  - copy backup files into deploy directory;" 
+  echo "   git-deploy           - copy git repository files into deploy directory"
+  echo "                          (will overwrite existing ones);"
+  echo "   clone <dir>          - init + backup-deploy equivalent;"
+  echo "   clear-metadata <dir> - clear meta information from files in deploy directory"
+  echo "                          (overwrites files; requires exiftool)"
+  echo "   deploy <dir> [args]  - upload files from local directory to server;"
+  echo "                          (deploy); pass optional args for rsync"
+  echo "   rotate <dir>         - make project copy (both backup and deploy directories)"
+  echo "   status <dir>         - show project info and settings"
+  echo "   update               - update this script to the latest version"
+  echo "   version              - show script version"
+  echo 
+  echo "SETUP:"
+  echo "  To set up a new project, run 'sync.sh init <project_name>'. This will create"
+  echo "a new directory with the given name and a configuration file inside it. Now you,"
+  echo "can download files from specific server. If you want edit files locally and then"
+  echo "upload them to the server, you have to run 'sync.sh backup-deploy <project_name>'"
+  echo "after initializing the project. This will create a local deploy directory where"
+  echo "you can edit files before deploying them to the server."
+  echo 
+  echo "WARNING:"
+  echo "  Use this script responsibly and make sure you have backups of your data"
+  echo "before deploying changes to the server."
+  echo
+  echo "AUTHOR:"
+  echo "        Dariusz Chilimoniuk, https://stack.pl "
+  echo "            https://sh.stack.pl/sync.sh "
+  echo
 }
 ask() {
     if [[ $1 == 'yes' ]]; then 
@@ -911,13 +913,11 @@ self_install() {
     echo
     echo "Self installation starting..."
     echo
-    echo "Downloading script:"
-    echo "  "$UPDATE_URL
     download_files
     verify_checksum
     installdir=""
-    if [[  ":$PATH:" == *":$installdir1:"* ]]; then
-        if [[  ":$PATH:" == *":$installdir2:"* ]]; then
+    if [[ ! ":$PATH:" == *":$installdir1:"* ]]; then
+        if [[ ! ":$PATH:" == *":$installdir2:"* ]]; then
             echo "  Your \$PATH does not contain usually used 'bin' paths"
             echo "  Navigate to ~/.bashrc and edit this file:"
             echo "  add ~/bin directory":
@@ -992,10 +992,7 @@ case "${1:-}" in
             echo "Running from pipeline..."
             self_install
         else
-            echo "sync.sh is rsync+ssh wrapper for file synchronization." 
-            echo
-            echo "Run  'sync.sh help'  for usage instructions"
-            echo
+            help-script
         fi
         ;;
 esac

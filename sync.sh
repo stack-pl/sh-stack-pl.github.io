@@ -65,6 +65,7 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
+FILE="sync.sh"
 VERSION="1.1.12"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
@@ -941,7 +942,7 @@ self_install() {
         echo_cmd cp $TMP_FILE $installdir/$scriptfile
         echo_cmd chmod +x $installdir/$scriptfile
         echo
-        echo "Done. Invoke 'sync.sh' for more information"
+        echo "Done.  New command '$FILE' is ready"
     fi
 }
 ###### MAIN LOGIC ######

@@ -66,11 +66,13 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="sync.sh"
-VERSION="1.1.14"
+VERSION="1.1.15"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
 SHA256_URL="${UPDATE_URL}.sha256"
+
+CONFIG=".config"
 
 BACKUP_PATH="${SCRIPT_PATH}.bak"
 LOCK_FILE="/tmp/${SCRIPT_NAME}.lock"
@@ -78,7 +80,22 @@ TMP_FILE="$(mktemp)"
 TMP_HASH="$(mktemp)"
 
 echo_cmd() {
-    echo "+ $@"
+    echo "$@"
+    "$@"
+}
+
+confirm_cmd() {
+    echo "***************  THIS COMMAND REQUIRES USER CONFIRMATION  ****************"
+    echo "$@"
+    echo "**************************************************************************"
+    read -p "  Continue? [yes/NO]: " -r
+    echo 
+    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
+    then
+        [[ "$0" = "$BASH_SOURCE" ]] && \
+        echo -e "Cancelled" && \
+        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    fi  
     "$@"
 }
 
@@ -300,7 +317,7 @@ full_path(){
 }
 
 load_config() {
-    config_file="$project_name/.config"
+    config_file="$project_name/$CONFIG"
     if [[ ! -f $config_file ]]; then
         echo "Configuration file '$config_file' does not exist. "
         echo "Please initialize the project first using:  'sync.sh init $project_name'"
@@ -327,17 +344,17 @@ init() {
     
     echo "You are initializing new directory '$project_name' for remote sychronization:"
     echo
-    read -p "REMOTE SSH HOST: [$remote_ssh_host]" -r
+    read -p "REMOTE SSH HOST [$remote_ssh_host]: " -r
     if [[ ! $REPLY =~ ^$ ]]
     then
         remote_ssh_host=$REPLY
     fi
-    read -p "REMOTE SSH USER: [$remote_ssh_user]" -r
+    read -p "REMOTE SSH USER [$remote_ssh_user]: " -r
     if [[ ! $REPLY =~ ^$ ]]
     then
         remote_ssh_user=$REPLY
     fi
-    read -p "REMOTE DIRECTORY: [$remote_dir]" -r
+    read -p "REMOTE DIRECTORY [$remote_dir]: " -r
     if [[ ! $REPLY =~ ^$ ]]
     then
         remote_dir=$REPLY
@@ -383,69 +400,49 @@ init() {
 
     mkdir -p "$project_name/$local_backup_dir"
     # mkdir -p "$project_name/$local_deploy_dir"
-    config_file="$project_name/.config"
-    echo "# This is your sync.sh project configuration. You can edit this file to change the settings." > "$config_file"
-    echo "# Generated automatically by sync.sh on $(date +"%Y%m%d %H%M%S")" >> "$config_file"
-    echo >> "$config_file"
-    echo "# Remote SSH host (it can be an IP address, a domain name, or a hostname defined in your SSH config)." >> "$config_file"
-    echo "remote_ssh_host=$remote_ssh_host" >> "$config_file"
-    echo >> "$config_file"
-    echo "# Remote SSH user" >> "$config_file"
-    echo "remote_ssh_user=$remote_ssh_user" >> "$config_file"
-    echo >> "$config_file"
-    echo "# Remote rsync directory (note the trailing slash)" >> "$config_file"
-    echo "# Full path to the directory on the remote server where you want to sync files." >> "$config_file"
-    echo "remote_dir=$remote_dir" >> "$config_file"
-    echo >> "$config_file"
-    echo "# Remote files ownership settings. Files deployed to the server will be owned by this user." >> "$config_file"
-    echo "remote_files_owner=$remote_files_owner" >> "$config_file"
-    echo >> "$config_file"
-    echo "# Remote files group settings. Files deployed to the server will belong to this group." >> "$config_file"
-    echo "remote_files_group=$remote_files_group" >> "$config_file"
-    echo >> "$config_file"
-    echo "# This is the base path for your local Git repository you want to deploy."
-    echo "# It should be path out of the place where this script is located." >> "$config_file"
-    echo "local_repository_base_path=$local_repository_base_path" >> "$config_file"
-    echo >> "$config_file"
-    echo "# This is the path to the directory in your local repository where files to be deployed are located." >> "$config_file"
-    echo "# Leave it empty if you want to deploy files from the root of the repository, " >> "$config_file"
-    echo "# or set it to a subdirectory if you want to deploy only part of the repository." >> "$config_file"
-    echo "# This path is interpreted relative to the preceding local_repository_base_path. " >> "$config_file"
-    echo "# For example, if your repository is at /home/user/repo and you want to deploy " >> "$config_file"
-    echo "# files from /home/user/repo/dist, set local_repository_base_path to /home/user/repo/ " >> "$config_file"
-    echo "# and local_repository_deploy_path to dist/" >> "$config_file"
-    echo "local_repository_deploy_path=$local_repository_deploy_path" >> "$config_file"
-    echo >> "$config_file"
-    echo "# This is the branch in your local repository that you want to deploy." >> "$config_file"
-    echo "local_repository_branch=$local_repository_branch" >> "$config_file"
-    
-    echo "Configuration saved to $config_file"
+    config_file="$project_name/$CONFIG"
+    {
+        echo "# This is your project configuration for $FILE command. You can edit this file to change the settings."
+        echo "# Generated automatically by sync.sh on $(date +"%Y%m%d %H%M%S")"
+        echo
+        echo "# Remote SSH host (it can be an IP address, a domain name, or a hostname defined in your SSH config)."
+        echo "remote_ssh_host=$remote_ssh_host"
+        echo
+        echo "# Remote SSH user"
+        echo "remote_ssh_user=$remote_ssh_user"
+        echo
+        echo "# Remote rsync directory (note the trailing slash)"
+        echo "# Full path to the directory on the remote server where you want to sync files."
+        echo "remote_dir=$remote_dir"
+        echo
+        echo "# Remote files ownership settings. Files deployed to the server will be owned by this user."
+        echo "remote_files_owner=$remote_files_owner"
+        echo
+        echo "# Remote files group settings. Files deployed to the server will belong to this group."
+        echo "remote_files_group=$remote_files_group"
+        echo
+        echo "# This is the base path for your local Git repository you want to deploy."
+        echo "# It should be path out of the place where this script is located."
+        echo "local_repository_base_path=$local_repository_base_path"
+        echo
+        echo "# This is the path to the directory in your local repository where files to be deployed are located."
+        echo "# Leave it empty if you want to deploy files from the root of the repository, "
+        echo "# or set it to a subdirectory if you want to deploy only part of the repository."
+        echo "# This path is interpreted relative to the preceding local_repository_base_path. "
+        echo "# For example, if your repository is at /home/user/repo and you want to deploy "
+        echo "# files from /home/user/repo/dist, set local_repository_base_path to /home/user/repo/ "
+        echo "# and local_repository_deploy_path to dist/"
+        echo "local_repository_deploy_path=$local_repository_deploy_path"
+        echo
+        echo "# This is the branch in your local repository that you want to deploy."
+        echo "local_repository_branch=$local_repository_branch"
+    } > $config_file
+
+    echo
+    echo "  Saving configuration in $config_file file".
+    echo "  You can edit this file later to change the settings."
+    echo
     echo "Project '$project_name' initialized successfully."
-    echo
-    echo "You can now download files from the server by running:"
-    echo "     $ 'sync.sh backup $project_name' "
-    echo "New files will be saved in "
-    echo "     $project_name/$local_backup_dir"
-    echo
-    echo "In case you want to edit files locally and then upload them to the server, run:"
-    echo "     $ 'sync.sh init-deploy $project_name'"
-    echo "to prepare working folder "
-    echo "     $project_name/$local_deploy_dir"
-    echo "then edit files there and when ready, run:"
-    echo "     'sync.sh deploy $project_name'  to upload files to the server."
-    echo 
-    echo "If you want to deploy files from a local Git repository, you can run:"
-    echo "     $ 'sync.sh git-deploy $project_name' "
-    echo "This will copy files from the specified $local_repository_branch branch of:"
-    echo "     git: $local_repository_base_path"
-    echo "and place them in the local deploy directory:"
-    echo "     $project_name/$local_deploy_dir"
-    echo "Use then:"
-    echo "     'sync.sh deploy $project_name'  to upload files to the server."
-    echo
-    echo "You can also add extra rsync options to the backup and deploy commands."
-    echo "For example, to delete files on the server that are not in the local deploy directory, you can run:"
-    echo "     $ 'sync.sh deploy $project_name --delete' "
     echo
 }
 backup-deploy() {
@@ -457,32 +454,15 @@ backup-deploy() {
 
     load_config
 
-    echo
-    echo "****** RSYNC *** (backup -> deploy) ***"
-    echo rsync -avz \
+    echo "Directory '$project_name/$local_deploy_dir' already exists."
+    echo "Files with the same name will be overwritten with files from '$project_name/$local_backup_dir'?"
+    echo 
+
+    # echo "****** RSYNC *** (backup -> deploy) ***"
+
+    confirm_cmd rsync -avz \
         "$project_name/$local_backup_dir" \
         "$project_name/$local_deploy_dir"
-    echo "********************"
-    echo
-    if [[ -d "$project_name/$local_deploy_dir" ]]; then 
-        echo "Directory '$project_name/$local_deploy_dir' already exists."
-        echo "Files with the same name will be overwritten with files from '$project_name/$local_backup_dir'?"
-        echo 
-        read -p "Continue? [yes/NO]: " -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
-        then
-            echo "Cancelled"
-            exit 1 || return 1
-        fi
-    fi
-
-    rsync -avz \
-        "$project_name/$local_backup_dir" \
-        "$project_name/$local_deploy_dir"
-
-    # cp -a "$project_name/$local_backup_dir" "$project_name/$local_deploy_dir" 
-    echo "Done!"  
 }
 
 backup() {
@@ -509,32 +489,9 @@ backup() {
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
-    echo "****** RSYNC **** (server -> backup) ***"
-    echo rsync -avz -og \
-        -e ssh \
-        --partial \
-        --exclude=.git \
-        --info=progress3,stats0 \
-        $2 \
-        $3 \
-        $4 \
-        $5 \
-        $6 \
-        $7 \
-        $remote_ssh_user@$remote_ssh_host:$remote_dir \
-        $project_name/$local_backup_dir
-    echo "********************"
-    echo
-    read -p "Updating local directory... Continue? [yes/NO]: " -r
-    echo 
-    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
-    then
-        [[ "$0" = "$BASH_SOURCE" ]] && \
-        echo "Cancelled" && \
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    fi
+    # echo "****** RSYNC **** (server -> backup) ***"
 
-    rsync -avz -og \
+    confirm_cmd rsync -avz -og \
         -e ssh  \
         --partial \
         --exclude=.git \
@@ -584,33 +541,6 @@ deploy() {
     fi
 
 
-#     echo rsync -avz \
-        # --chown=$remote_files_owner:$remote_files_group \
-    echo "****** RSYNC **** (deploy -> server) ***"
-    echo rsync -avz \
-        --chown=$remote_files_owner:$remote_files_group \
-        -e ssh \
-        --partial \
-        --exclude=.git \
-        --info=progress3,stats0 \
-        $2 \
-        $3 \
-        $4 \
-        $5 \
-        $6 \
-        $7 \
-        $project_name/$local_deploy_dir \
-        $remote_ssh_user@$remote_ssh_host:$remote_dir
-    echo "********************"
-    echo
-    read -p "Updating server directory... Continue? [yes/NO]: " -r
-    echo 
-    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
-    then
-        [[ "$0" = "$BASH_SOURCE" ]] && \
-        echo "Cancelled" && \
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    fi
 
     if [[ -n "$8" ]]; then
         echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
@@ -618,8 +548,9 @@ deploy() {
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
+    # echo "****** RSYNC **** (deploy -> server) ***"
 
-    rsync -avz \
+    confirm_cmd rsync -avz \
         --chown=$remote_files_owner:$remote_files_group \
         -e ssh \
         --partial \
@@ -651,26 +582,25 @@ git-deploy() {
     fi
 
     echo "Checking out branch '$local_repository_branch' in local repository at '$local_repository_base_path'."
-    echo git -C "$local_repository_base_path" checkout "$local_repository_branch"
-    git -C "$local_repository_base_path" checkout "$local_repository_branch" > /dev/null 2>&1
+    echo_cmd git -C "$local_repository_base_path" checkout "$local_repository_branch" > /dev/null 2>&1
     echo
-    echo "****** RSYNC *** (repo -> deploy) ***"
-    echo rsync -avz \
-        --exclude=".*" \
-        "$local_repository_base_path$local_repository_deploy_path" \
-        "$project_name/$local_deploy_dir"
-    echo "********************"
-    echo
-    read -p "Copying files from local repository... Continue? [yes/NO]: " -r
-    echo 
-    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
-    then
-        [[ "$0" = "$BASH_SOURCE" ]] && \
-        echo "Cancelled" && \
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    fi
+    # echo "****** RSYNC *** (repo -> deploy) ***"
+    # echo rsync -avz \
+    #     --exclude=".*" \
+    #     "$local_repository_base_path$local_repository_deploy_path" \
+    #     "$project_name/$local_deploy_dir"
+    # echo "********************"
+    # echo
+    # read -p "Copying files from local repository... Continue? [yes/NO]: " -r
+    # echo 
+    # if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
+    # then
+    #     [[ "$0" = "$BASH_SOURCE" ]] && \
+    #     echo "Cancelled" && \
+    #     exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    # fi
 
-    rsync -avz \
+    confirm_cmd rsync -avz \
         --exclude=".*" \
         "$local_repository_base_path$local_repository_deploy_path" \
         "$project_name/$local_deploy_dir"
@@ -688,13 +618,13 @@ rotate() {
     load_config
 
     timestamp=$(date +"%Y%m%d_%H%M%S")
-    mkdir -p "$project_name/$local_rotate_dir$timestamp/$local_backup_dir"
-    cp -a "$project_name/$local_backup_dir" "$project_name/$local_rotate_dir$timestamp/"
-    echo "Backup rotated: $project_name/$local_rotate_dir$timestamp/$local_backup_dir"
+    echo_cmd mkdir -p "$project_name/$local_rotate_dir$timestamp/$local_backup_dir"
+    echo_cmd cp -a "$project_name/$local_backup_dir" "$project_name/$local_rotate_dir$timestamp/"
+    echo "Backup dir rotated: $project_name/$local_rotate_dir$timestamp/$local_backup_dir"
     if [[ -d "$project_name/$local_deploy_dir" ]]; then 
-        mkdir -p "$project_name/$local_rotate_dir$timestamp/$local_deploy_dir"
-        cp -a "$project_name/$local_deploy_dir" "$project_name/$local_rotate_dir$timestamp/"
-        echo "Backup rotated: $project_name/$local_rotate_dir$timestamp/$local_deploy_dir"
+        echo_cmd mkdir -p "$project_name/$local_rotate_dir$timestamp/$local_deploy_dir"
+        echo_cmd cp -a "$project_name/$local_deploy_dir" "$project_name/$local_rotate_dir$timestamp/"
+        echo "Deploy dir rotated: $project_name/$local_rotate_dir$timestamp/$local_deploy_dir"
     fi
 }
 
@@ -718,22 +648,22 @@ clear-metadata() {
     echo "WARNING: This will permanently remove all metadata in:"
     echo "  '$project_name/$local_deploy_dir'."
     echo
-    echo "****** ExifTool ****** ( deploy directory ) ******"
-    echo exiftool -all= -r "$project_name/$local_deploy_dir" \
-            -overwrite_original_in_place \
-            -i SYMLINKS
-    echo "**************************************************"
-    echo
-    read -p "Continue? [yes/NO]: " -r
-    echo 
-    if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
-    then
-        [[ "$0" = "$BASH_SOURCE" ]] && \
-        echo -e "Cancelled. No files changed" && \
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    fi
+    # echo "****** ExifTool ****** ( deploy directory ) ******"
+    # echo exiftool -all= -r "$project_name/$local_deploy_dir" \
+    #         -overwrite_original_in_place \
+    #         -i SYMLINKS
+    # echo "**************************************************"
+    # echo
+    # read -p "Continue? [yes/NO]: " -r
+    # echo 
+    # if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
+    # then
+    #     [[ "$0" = "$BASH_SOURCE" ]] && \
+    #     echo -e "Cancelled. No files changed" && \
+    #     exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    # fi
 
-    exiftool -all= -r "$project_name/$local_deploy_dir" \
+    confirm_cmd exiftool -all= -r "$project_name/$local_deploy_dir" \
         -overwrite_original_in_place \
         -i SYMLINKS
 
@@ -844,16 +774,104 @@ status() {
     fi
 }
 
-help-script() {
+tutorial1() {
+    echo 
+    echo ""
+    echo "You can now download files from the server by running:"
+    echo "     $ 'sync.sh backup $project_name' "
+    echo "New files will be saved in "
+    echo "     $project_name/$local_backup_dir"
+    echo
+    echo "In case you want to edit files locally and then upload them to the server, run:"
+    echo "     $ 'sync.sh backup-deploy $project_name'"
+    echo "to prepare working folder "
+    echo "     $project_name/$local_deploy_dir"
+    echo "then edit files there and when ready, run:"
+    echo "     'sync.sh deploy $project_name'  to upload files to the server."
+    echo 
+    echo "If you want to deploy files from a local Git repository, you can run:"
+    echo "     $ 'sync.sh git-deploy $project_name' "
+    echo "This will copy files from the specified $local_repository_branch branch of:"
+    echo "     git: $local_repository_base_path"
+    echo "and place them in the local deploy directory:"
+    echo "     $project_name/$local_deploy_dir"
+    echo "Use then:"
+    echo "     'sync.sh deploy $project_name'  to upload files to the server."
+    echo
+    echo "You can also add extra rsync options to the backup and deploy commands."
+    echo "For example, to delete files on the server that are not in the local deploy directory, you can run:"
+    echo "     $ 'sync.sh deploy $project_name --delete' "
+    echo
+}
+
+help() {
+    case "${1:-}" in
+        init)
+            help-init
+            ;;
+        backup)
+            help-backup
+            ;;
+        backup-deploy)
+            help-backup-deploy
+            ;;
+        clone)
+            help-clone
+            ;;
+        git-deploy)
+            help-git-deploy
+            ;;
+        deploy)
+            help-deploy
+            ;;
+        clear-metadata)
+            help-clear-metadata
+            ;;
+        rotate)
+            help-rotate
+            ;;
+        status)
+            help-status
+            ;;
+        upgrade)
+            help-upgrade
+            ;;
+        version)
+            help-version
+            ;;
+        "")
+            help-default
+            ;;
+        *)
+        help-err "${1:-}"
+            ;;
+    esac
+}
+
+
+help-status() {
+    echo
+    echo " $FILE status <project_dir>"
+    echo
+    echo "Show project settings and parameters"
+}
+
+help-err() {
+    echo "Help error: unknown command \"$1\""
+}
+
+help-default() {
   echo
-  echo "  This script is a wrapper around rsync and SSH for synchronizing files"
-  echo "between a local directory and a remote server."
+  echo "  sync.sh - a command-line utility for managing local and remote directories,"
+  echo "            supporting backups and deployments via RSYNC and SSH."
   echo 
   echo "USAGE:"
   echo " sync.sh COMMAND [ PARAMS ]"
   echo
   echo "COMMAND:"
   echo "   help                 - show this help message"
+  echo "   help <command>       - show info about provided command,"
+  echo "                          for example 'sync.sh help init'"
   echo "   init <dir>           - initialize empty project with given name,"
   echo "   backup <dir> [args]  - download files from server to local directory;"
   echo "                          (backup); pass optional args for rsync"
@@ -871,10 +889,10 @@ help-script() {
   echo "   version              - show script version"
   echo 
   echo "SETUP:"
-  echo "  To set up a new project, run 'sync.sh init <project_name>'. This will create"
+  echo "  To set up a new project,  run 'sync.sh init <projectname>'.  This will create"
   echo "a new directory with the given name and a configuration file inside it. Now you,"
   echo "can download files from specific server. If you want edit files locally and then"
-  echo "upload them to the server, you have to run 'sync.sh backup-deploy <project_name>'"
+  echo "upload them to the server, you have to run 'sync.sh backup-deploy <projectname>'"
   echo "after initializing the project. This will create a local deploy directory where"
   echo "you can edit files before deploying them to the server."
   echo 
@@ -887,23 +905,7 @@ help-script() {
   echo "            https://sh.stack.pl/sync.sh "
   echo
 }
-ask() {
-    if [[ $1 == 'yes' ]]; then 
-        read -p "Continue? [yes/NO]: " -r
-        echo 
-        if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
-        then
-            [[ "$0" = "$BASH_SOURCE" ]] && \
-            echo -e "Cancelled" && \
-            exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-        fi  
-    else
-        [[ "$0" = "$BASH_SOURCE" ]] && \
-        echo -e "Cancelled" && \
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    fi
 
-}
 self_install() {
     installdir1="$HOME/bin"
     installdir2="$HOME/.local/bin"
@@ -969,7 +971,7 @@ case "${1:-}" in
         git-deploy $2
         ;; 
     help)
-        help-script
+        help $2
         ;;
     init)
         init $2
@@ -989,10 +991,10 @@ case "${1:-}" in
     *)
         if [[ ! -n "$BASH_SOURCE" ]] && [[ ! "$0" = "$BASH_SOURCE" ]] && [[ -p "/dev/stdin" ]]; then
             # Install from official URL: curl -LsSf https://sh.stack.pl/sync.sh | sh
-            # Pretend to installation: cat ./sync.sh | sh
+            # Local installation (overwrites itself): cat ./sync.sh | sh
             self_install
         else
-            help-script
+            help
         fi
         ;;
 esac

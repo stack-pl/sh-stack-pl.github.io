@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="sync.sh"
-VERSION="1.1.12"
+VERSION="1.1.13"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -258,17 +258,15 @@ update_script() {
     # ==============================================
     # Backup
     # ==============================================
-    echo "Tworzenie backupu aktualnej wersji skryptu w $BACKUP_PATH"
-    cp "$SCRIPT_PATH" "$BACKUP_PATH"
+    echo_cmd cp "$SCRIPT_PATH" "$BACKUP_PATH"
     # ==============================================
     # Instalacja
     # ==============================================
-    echo "Instalowanie aktualizacji..."
     trap rollback ERR
-    cp "$TMP_FILE" "$SCRIPT_PATH"
-    chmod +x "$SCRIPT_PATH"
+    echo_cmd cp "$TMP_FILE" "$SCRIPT_PATH"
+    echo_cmd chmod +x "$SCRIPT_PATH"
     trap - ERR
-    rm "$BACKUP_PATH"
+    echo_cmd rm "$BACKUP_PATH"
     echo "Aktualizacja zakończona sukcesem."
 }
 
@@ -920,8 +918,8 @@ self_install() {
     if [[ ! ":$PATH:" == *":$installdir1:"* ]]; then
         if [[ ! ":$PATH:" == *":$installdir2:"* ]]; then
             echo "  Your \$PATH does not contain usually used 'bin' paths"
-            echo "  Navigate to ~/.bashrc and edit this file:"
-            echo "  add ~/bin directory":
+            echo "  Open ~/.bashrc in your editor and"
+            echo "  add (or modify if exist  "~/bin" directory":
             echo "export PATH=\$PATH:$installdir1"
             echo "  or add ~/.local/bin directory":
             echo "export PATH=\$PATH:$installdir1"

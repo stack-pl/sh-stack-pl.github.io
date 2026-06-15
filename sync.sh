@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="sync.sh"
-VERSION="1.1.15"
+VERSION="1.1.16"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -848,7 +848,53 @@ help() {
     esac
 }
 
+help-init() {
+    echo \
+"
+  $FILE init <new_project>
 
+Tworzy nowy projekt o nazwie 'new_project'. 
+
+Wykonanie tego polecenia powoduje utworzenie katalogu o nazwie takiej jak projekt.
+Następnie uruchamiana jest interaktywna konfiguracja, w której zostaniesz poproszony o podanie danych konfiguracyjnych
+serwera itp. Po dotarciu do końca konfiguracji całośc jest zapisywana w pliku <new_project>/$CONFIG. Dalej tworzony jest
+katalog <new_project>/$local_backup_dir i komenda kończy działanie.
+"
+}
+
+help-backup() {
+    echo \
+"
+  $FILE backup <project>
+
+Ściąga stan katalogu na serwerze do lokalnego katalogu 'new_project/$local_backup_dir'. 
+
+Polecenie przy pomocy narzędzi 'rsync' i  'ssh' łączy się do serwera i przy pomocy mechanizmu synchronizacji
+odtwarza stan katalogu z serwera na lokalnym komputerze. Nazwę zdalnego katalogu oraz pozostałe parametry 
+uzyskasz poleceniem:
+  $FILE status <project>
+"
+}
+help-backup-deploy() {
+    echo \
+"
+  $FILE backup-deploy <project>
+
+Kopiuje stan katalogu 'project/$local_backup_dir' do katalogu 'project/$local_deploy_dir'. 
+Wykonanie tego polecenia odblokowuje możliwośc wysyłki danych na serwer (polecenie '$FILE deploy').
+
+Polecenie przy pomocy narzędzi 'rsync' odtwarza stan katalogu backup w katalogu deploy.
+Nie jest to zwykłe kopiowanie lecz synchronizacja. Źródłem jest katalog 'project/$local_backup_dir',
+miejscem docelowym 'project/$local_deploy_dir'. Kopiowane są brakujące lub zmodyfikowane pliki.
+Pliki już obecne w katalogu docelowym, jeśli nie ma ich w katalogu źródłowym nie zostaną usnięte.
+To działanie można zmodyfikować dodając do komendy parametry takie jak --ignore-existing lub --delete:
+ $FILE backup-deploy <project> --ignore-existing  
+   nie aktualizuj plików, które już są w katalogu docelowym
+ $FILE backup-deploy <project> --delete
+   kasuj te pliki w katalogu docelowym, których nie ma w źródłowym.
+Po inne parametry patrz opis programu 'rsync' (man rsync; info rsync).
+"
+}
 help-status() {
     echo
     echo " $FILE status <project_dir>"

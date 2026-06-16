@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="sync.sh"
-VERSION="1.1.16"
+VERSION="1.1.17"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -80,20 +80,20 @@ TMP_FILE="$(mktemp)"
 TMP_HASH="$(mktemp)"
 
 echo_cmd() {
-    echo "$@"
+    echo "$@" >&2
     "$@"
 }
 
 confirm_cmd() {
-    echo "***************  THIS COMMAND REQUIRES USER CONFIRMATION  ****************"
-    echo "$@"
-    echo "**************************************************************************"
+    echo "***************  THIS COMMAND REQUIRES USER CONFIRMATION  ****************" >&2
+    echo "$@" >&2
+    echo "**************************************************************************" >&2
     read -p "  Continue? [yes/NO]: " -r
     echo 
     if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
     then
         [[ "$0" = "$BASH_SOURCE" ]] && \
-        echo -e "Cancelled" && \
+        echo "Cancelled" >&2 && \
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi  
     "$@"
@@ -952,9 +952,52 @@ help-default() {
   echo
 }
 
+path-update() {
+    dir1=bin
+    dir2=.local/bin
+    location1="$HOME/$dir1/$FILE"
+    location2="$HOME/$dir2/$FILE"
+    localbinpath=""
+    if [[ -f $location1 ]]; then
+        localbinpath="$HOME/$dir1"
+    elif [[ -f $location2 ]]; then
+        localbinpath="$HOME/$dir2"
+    else
+        echo "$location1 not found"
+        echo "$location2 not found"
+        echo
+        echo "Put the file you running into one of paths above or install the script"
+        echo "directly from website:"
+        echo 
+        echo "curl -LsSf https://sh.stack.pl/sync.sh | sh"
+        echo
+        exit 1 || return 1
+    fi
+
+    source $HOME/.bashrc
+
+    if [[ ! ":$PATH:" == *":$localbinpath:"* ]]; then
+        echo "The new directory will be appended to the default PATH used to locate executable commands."
+        echo "To do so, the file $HOME/.bashrc will be changed:"
+        # echo "echo export PATH=\$PATH:$localbinpath >> $HOME/.bashrc"
+        # echo export PATH=\$PATH:$localbinpath >> $HOME/.bashrc
+        echo "Your .bashrc file will be looks like below:"
+        echo "------ BEGIN ~/.bashrc -----"
+        cat $HOME/.bashrc | sed "\$a export PATH=\$PATH:$localbinpath" | tail -5
+        echo "------- END ~/.bashrc ------"
+        confirm_cmd sed -i "\$a export PATH=\$PATH:$localbinpath"  $HOME/.bashrc
+        source $HOME/.bashrc
+    else
+        echo "The requested directory ($localbinpath) is already in PATH. No changes made."
+    fi
+
+}
+
 self_install() {
-    installdir1="$HOME/bin"
-    installdir2="$HOME/.local/bin"
+    dir1=bina
+    dir2=.local/bina
+    installdir1="$HOME/$dir1"
+    installdir2="$HOME/$dir2"
     currentdir=$(pwd)
     scriptfile="sync.sh"
     echo
@@ -963,23 +1006,13 @@ self_install() {
     download_files
     verify_checksum
     installdir=""
+    dir=""
     if [[ ! ":$PATH:" == *":$installdir1:"* ]]; then
-        if [[ ! ":$PATH:" == *":$installdir2:"* ]]; then
-            echo "  Your \$PATH does not contain usually used 'bin' paths"
-            echo "  Open ~/.bashrc in your editor and"
-            echo "  add (or modify if exist  "~/bin" directory":
-            echo "export PATH=\$PATH:$installdir1"
-            echo "  or add ~/.local/bin directory":
-            echo "export PATH=\$PATH:$installdir1"
-            echo "  then restart terminal and run installation again"
-            [[ "$0" = "$BASH_SOURCE" ]] && \
-            echo -e "Cancelled" && \
-            exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-        else
-            installdir=$installdir2
-        fi
+        installdir=$installdir2
+        dir=$dir2
     else
         installdir=$installdir1
+        dir=$dir1
     fi
 
     if [[ -n $installdir ]]; then
@@ -989,6 +1022,15 @@ self_install() {
         echo_cmd chmod +x $installdir/$scriptfile
         echo
         echo "Done.  New command '$FILE' is ready"
+    fi
+
+    if [[ ! ":$PATH:" == *":$installdir1:"* ]] && [[ ! ":$PATH:" == *":$installdir2:"* ]]; then
+        echo
+        echo "To run sync.sh from any directory, you must update PATH."
+        echo "One way to accomplish this is to use the script that has just been installed:" 
+        echo
+        echo "~/$dir/$FILE ADDPATH"
+        echo
     fi
 }
 ###### MAIN LOGIC ######
@@ -1021,6 +1063,9 @@ case "${1:-}" in
         ;;
     init)
         init $2
+        ;;
+    ADDPATH)
+        path-update
         ;;
     rotate)
         rotate $2

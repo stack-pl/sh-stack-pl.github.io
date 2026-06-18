@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="sync.sh"
-VERSION="1.1.18"
+VERSION="1.1.19"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -994,8 +994,8 @@ path_update() {
 }
 
 self_install() {
-    dir1=bina
-    dir2=.local/bina
+    dir1=bin
+    dir2=.local/bin
     installdir1="$HOME/$dir1"
     installdir2="$HOME/$dir2"
     currentdir=$(pwd)

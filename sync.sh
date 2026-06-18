@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="sync.sh"
-VERSION="1.1.17"
+VERSION="1.1.18"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -445,7 +445,7 @@ init() {
     echo "Project '$project_name' initialized successfully."
     echo
 }
-backup-deploy() {
+backup_deploy() {
     project_name=${1%/}    
     if [[ ! -n "$project_name" ]]; then
         echo "Please provide a project name. Example: sync.sh init-deploy my_project"
@@ -566,7 +566,7 @@ deploy() {
         $remote_ssh_user@$remote_ssh_host:$remote_dir
 }
 
-git-deploy() {
+git_deploy() {
     project_name=${1%/}
     if [[ ! -n "$project_name" ]]; then
         echo "Please provide a project name. Example: sync.sh git-deploy my_project"
@@ -628,7 +628,7 @@ rotate() {
     fi
 }
 
-clear-metadata() {
+clear_metadata() {
 
     if [[ ! $(which exiftool) ]]; then
         [[ "$0" = "$BASH_SOURCE" ]] && \
@@ -807,48 +807,48 @@ tutorial1() {
 help() {
     case "${1:-}" in
         init)
-            help-init
+            help_init
             ;;
         backup)
-            help-backup
+            help_backup
             ;;
         backup-deploy)
-            help-backup-deploy
+            help_backup_deploy
             ;;
         clone)
-            help-clone
+            help_clone
             ;;
         git-deploy)
-            help-git-deploy
+            help_git_deploy
             ;;
         deploy)
-            help-deploy
+            help_deploy
             ;;
         clear-metadata)
-            help-clear-metadata
+            help_clear_metadata
             ;;
         rotate)
-            help-rotate
+            help_rotate
             ;;
         status)
-            help-status
+            help_status
             ;;
         upgrade)
-            help-upgrade
+            help_upgrade
             ;;
         version)
-            help-version
+            help_version
             ;;
         "")
-            help-default
+            help_default
             ;;
         *)
-        help-err "${1:-}"
+        help_err "${1:-}"
             ;;
     esac
 }
 
-help-init() {
+help_init() {
     echo \
 "
   $FILE init <new_project>
@@ -862,7 +862,7 @@ katalog <new_project>/$local_backup_dir i komenda kończy działanie.
 "
 }
 
-help-backup() {
+help_backup() {
     echo \
 "
   $FILE backup <project>
@@ -875,10 +875,10 @@ uzyskasz poleceniem:
   $FILE status <project>
 "
 }
-help-backup-deploy() {
+help_backup_deploy() {
     echo \
 "
-  $FILE backup-deploy <project>
+  $FILE backup_deploy <project>
 
 Kopiuje stan katalogu 'project/$local_backup_dir' do katalogu 'project/$local_deploy_dir'. 
 Wykonanie tego polecenia odblokowuje możliwośc wysyłki danych na serwer (polecenie '$FILE deploy').
@@ -888,25 +888,25 @@ Nie jest to zwykłe kopiowanie lecz synchronizacja. Źródłem jest katalog 'pro
 miejscem docelowym 'project/$local_deploy_dir'. Kopiowane są brakujące lub zmodyfikowane pliki.
 Pliki już obecne w katalogu docelowym, jeśli nie ma ich w katalogu źródłowym nie zostaną usnięte.
 To działanie można zmodyfikować dodając do komendy parametry takie jak --ignore-existing lub --delete:
- $FILE backup-deploy <project> --ignore-existing  
+ $FILE backup_deploy <project> --ignore-existing  
    nie aktualizuj plików, które już są w katalogu docelowym
- $FILE backup-deploy <project> --delete
+ $FILE backup_deploy <project> --delete
    kasuj te pliki w katalogu docelowym, których nie ma w źródłowym.
 Po inne parametry patrz opis programu 'rsync' (man rsync; info rsync).
 "
 }
-help-status() {
+help_status() {
     echo
     echo " $FILE status <project_dir>"
     echo
     echo "Show project settings and parameters"
 }
 
-help-err() {
+help_err() {
     echo "Help error: unknown command \"$1\""
 }
 
-help-default() {
+help_default() {
   echo
   echo "  sync.sh - a command-line utility for managing local and remote directories,"
   echo "            supporting backups and deployments via RSYNC and SSH."
@@ -921,11 +921,11 @@ help-default() {
   echo "   init <dir>           - initialize empty project with given name,"
   echo "   backup <dir> [args]  - download files from server to local directory;"
   echo "                          (backup); pass optional args for rsync"
-  echo "   backup-deploy <dir>  - copy backup files into deploy directory;" 
-  echo "   git-deploy           - copy git repository files into deploy directory"
+  echo "   backup_deploy <dir>  - copy backup files into deploy directory;" 
+  echo "   git_deploy           - copy git repository files into deploy directory"
   echo "                          (will overwrite existing ones);"
-  echo "   clone <dir>          - init + backup-deploy equivalent;"
-  echo "   clear-metadata <dir> - clear meta information from files in deploy directory"
+  echo "   clone <dir>          - init + backup_deploy equivalent;"
+  echo "   clear_metadata <dir> - clear meta information from files in deploy directory"
   echo "                          (overwrites files; requires exiftool)"
   echo "   deploy <dir> [args]  - upload files from local directory to server;"
   echo "                          (deploy); pass optional args for rsync"
@@ -952,7 +952,7 @@ help-default() {
   echo
 }
 
-path-update() {
+path_update() {
     dir1=bin
     dir2=.local/bin
     location1="$HOME/$dir1/$FILE"
@@ -1040,23 +1040,23 @@ case "${1:-}" in
         backup $2 $3 $4 $5 $6 $7 $8 $9
         ;;
     backup-deploy)
-        backup-deploy $2
+        backup_deploy $2
         ;;   
     clone)
         init $2
         backup $2 $3 $4 $5 $6 $7 $8 $9
-        backup-deploy $2
+        backup_deploy $2
         rotate $2
         status $2
         ;;
     clear-metadata)
-        clear-metadata $2
+        clear_metadata $2
         ;;
     deploy)
         deploy $2 $3 $4 $5 $6 $7 $8 $9
         ;;
     git-deploy)
-        git-deploy $2
+        git_deploy $2
         ;; 
     help)
         help $2
@@ -1065,7 +1065,7 @@ case "${1:-}" in
         init $2
         ;;
     ADDPATH)
-        path-update
+        path_update
         ;;
     rotate)
         rotate $2

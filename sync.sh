@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="sync.sh"
-VERSION="1.1.19"
+VERSION="1.1.20"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/sync.sh"
@@ -983,7 +983,7 @@ path_update() {
         # echo export PATH=\$PATH:$localbinpath >> $HOME/.bashrc
         echo "Your .bashrc file will be looks like below:"
         echo "------ BEGIN ~/.bashrc -----"
-        cat $HOME/.bashrc | sed "\$a export PATH=\$PATH:$localbinpath" | tail -5
+        cat $HOME/.bashrc | sed "\$a export PATH=\$PATH:$localbinpath"
         echo "------- END ~/.bashrc ------"
         confirm_cmd sed -i "\$a export PATH=\$PATH:$localbinpath"  $HOME/.bashrc
         source $HOME/.bashrc

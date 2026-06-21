@@ -65,13 +65,14 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-FILE="sync.sh"
-VERSION="1.1.20"
+FILE="bsync"
+VERSION="1.2.0"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
-UPDATE_URL="https://sh.stack.pl/sync.sh"
+UPDATE_URL="https://sh.stack.pl/bsync"
 SHA256_URL="${UPDATE_URL}.sha256"
 
+# This is the name of the configuration file that will be created in each project directory to store the project settings.
 CONFIG=".config"
 
 BACKUP_PATH="${SCRIPT_PATH}.bak"
@@ -403,7 +404,7 @@ init() {
     config_file="$project_name/$CONFIG"
     {
         echo "# This is your project configuration for $FILE command. You can edit this file to change the settings."
-        echo "# Generated automatically by sync.sh on $(date +"%Y%m%d %H%M%S")"
+        echo "# Generated automatically by $FILE on $(date +"%Y%m%d %H%M%S")"
         echo
         echo "# Remote SSH host (it can be an IP address, a domain name, or a hostname defined in your SSH config)."
         echo "remote_ssh_host=$remote_ssh_host"
@@ -448,7 +449,7 @@ init() {
 backup_deploy() {
     project_name=${1%/}    
     if [[ ! -n "$project_name" ]]; then
-        echo "Please provide a project name. Example: sync.sh init-deploy my_project"
+        echo "Please provide a project name. Example: $FILE init-deploy my_project"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -469,7 +470,7 @@ backup() {
 
     project_name=${1%/}    
     if [[ ! -n "$project_name" ]]; then
-        echo "Please provide a project name. Example: sync.sh backup my_project"
+        echo "Please provide a project name. Example: $FILE backup my_project"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -485,7 +486,7 @@ backup() {
 
     if [[ -n "$8" ]]; then
         echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
-        echo "Example:  sync.sh backup my_project --delete --exclude=cache/"
+        echo "Example:  $FILE backup my_project --delete --exclude=cache/"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -509,7 +510,7 @@ backup() {
 deploy() {
     project_name=${1%/}
     if [[ ! -n "$project_name" ]]; then
-        echo "Please provide a project name. Example: sync.sh deploy my_project"
+        echo "Please provide a project name. Example: $FILE deploy my_project"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -519,7 +520,7 @@ deploy() {
         echo "Project '$project_name' is initialized for backup (downloading files) only and"
         echo "does not have a local deploy directory. Please initialize the project for deploying"
         echo "functionality by command:"
-        echo "    $ sync.sh init-deploy $project_name"
+        echo "    $FILE init-deploy $project_name"
         echo "or copy files you want into "
         echo "    $project_name/$local_deploy_dir"
         echo "and try again."
@@ -536,7 +537,7 @@ deploy() {
 
     if [[ -n "$8" ]]; then
         echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
-        echo "Example:  sync.sh backup my_project --delete --exclude=cache/"
+        echo "Example:  $FILE backup my_project --delete --exclude=cache/"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -544,7 +545,7 @@ deploy() {
 
     if [[ -n "$8" ]]; then
         echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
-        echo "Example:  sync.sh deploy my_project --delete --exclude=.*//"
+        echo "Example:  $FILE deploy my_project --delete --exclude=.*//"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -569,7 +570,7 @@ deploy() {
 git_deploy() {
     project_name=${1%/}
     if [[ ! -n "$project_name" ]]; then
-        echo "Please provide a project name. Example: sync.sh git-deploy my_project"
+        echo "Please provide a project name. Example: $FILE git-deploy my_project"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -611,7 +612,7 @@ git_deploy() {
 rotate() {
     project_name=${1%/}
     if [[ ! -n "$project_name" ]]; then
-        echo "Please provide a project name. Example: sync.sh backup my_project"
+        echo "Please provide a project name. Example: $FILE backup my_project"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -639,7 +640,7 @@ clear_metadata() {
 
     project_name=${1%/}
     if [[ ! -n "$project_name" ]]; then
-        echo "Please provide a project name. Example: sync.sh clear-metadata my_project"
+        echo "Please provide a project name. Example: $FILE clear-metadata my_project"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
 
@@ -674,7 +675,7 @@ clear_metadata() {
 status() {
     project_name=${1%/}
     if [[ ! -n "$project_name" ]]; then
-        echo "Please provide a project name. Example: sync.sh status my_project"
+        echo "Please provide a project name. Example: $FILE status my_project"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
     load_config
@@ -778,7 +779,7 @@ tutorial1() {
     echo 
     echo ""
     echo "You can now download files from the server by running:"
-    echo "     $ 'sync.sh backup $project_name' "
+    echo "     $ '$FILE backup $project_name' "
     echo "New files will be saved in "
     echo "     $project_name/$local_backup_dir"
     echo
@@ -908,16 +909,16 @@ help_err() {
 
 help_default() {
   echo
-  echo "  sync.sh - a command-line utility for managing local and remote directories,"
+  echo "  $FILE - a command-line utility for managing local and remote directories,"
   echo "            supporting backups and deployments via RSYNC and SSH."
   echo 
   echo "USAGE:"
-  echo " sync.sh COMMAND [ PARAMS ]"
+  echo " $FILE COMMAND [ PARAMS ]"
   echo
   echo "COMMAND:"
   echo "   help                 - show this help message"
   echo "   help <command>       - show info about provided command,"
-  echo "                          for example 'sync.sh help init'"
+  echo "                          for example '$FILE help init'"
   echo "   init <dir>           - initialize empty project with given name,"
   echo "   backup <dir> [args]  - download files from server to local directory;"
   echo "                          (backup); pass optional args for rsync"
@@ -935,10 +936,10 @@ help_default() {
   echo "   version              - show script version"
   echo 
   echo "SETUP:"
-  echo "  To set up a new project,  run 'sync.sh init <projectname>'.  This will create"
+  echo "  To set up a new project,  run '$FILE init <projectname>'.  This will create"
   echo "a new directory with the given name and a configuration file inside it. Now you,"
   echo "can download files from specific server. If you want edit files locally and then"
-  echo "upload them to the server, you have to run 'sync.sh backup-deploy <projectname>'"
+  echo "upload them to the server, you have to run '$FILE backup-deploy <projectname>'"
   echo "after initializing the project. This will create a local deploy directory where"
   echo "you can edit files before deploying them to the server."
   echo 
@@ -948,7 +949,7 @@ help_default() {
   echo
   echo "AUTHOR:"
   echo "        Dariusz Chilimoniuk, https://stack.pl "
-  echo "            https://sh.stack.pl/sync.sh "
+  echo "            https://sh.stack.pl/$FILE "
   echo
 }
 
@@ -969,7 +970,7 @@ path_update() {
         echo "Put the file you running into one of paths above or install the script"
         echo "directly from website:"
         echo 
-        echo "curl -LsSf https://sh.stack.pl/sync.sh | sh"
+        echo "curl -LsSf https://sh.stack.pl/$FILE | sh"
         echo
         exit 1 || return 1
     fi
@@ -999,7 +1000,7 @@ self_install() {
     installdir1="$HOME/$dir1"
     installdir2="$HOME/$dir2"
     currentdir=$(pwd)
-    scriptfile="sync.sh"
+    scriptfile="$FILE"
     echo
     echo "Self installation starting..."
     echo
@@ -1081,8 +1082,8 @@ case "${1:-}" in
         ;;
     *)
         if [[ ! -n "$BASH_SOURCE" ]] && [[ ! "$0" = "$BASH_SOURCE" ]] && [[ -p "/dev/stdin" ]]; then
-            # Install from official URL: curl -LsSf https://sh.stack.pl/sync.sh | sh
-            # Local installation (overwrites itself): cat ./sync.sh | sh
+            # Install from official URL: curl -LsSf https://sh.stack.pl/bsync | sh
+            # Local installation (overwrites itself): cat ./bsync | sh
             self_install
         else
             help

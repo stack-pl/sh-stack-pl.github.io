@@ -6,10 +6,12 @@
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.6"
+VERSION="1.0.7"
 DESCRIPTION="Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums."
+PAGE_URL="https://sh.stack.pl"
 
-UPDATE_URL="https://sh.stack.pl/index.sh"
+
+UPDATE_URL="${PAGE_URL}/index.sh"
 SHA256_URL="${UPDATE_URL}.sha256"
 
 BACKUP_PATH="${SCRIPT_PATH}.bak"
@@ -208,7 +210,11 @@ update_script() {
 
 generate() {
     echo "Generating index.html..."
-    find . -type f -name "*" -not -name '*index.html*' -not -path '*.sha256' -not -path './.*' -not -name '*CNAME*' \
+    find . -type f -name "*" \
+            -not -name '*index.html*' \
+            -not -path '*.sha256' \
+            -not -path './.*' \
+            -not -name '*CNAME*' \
     | sort \
     | awk \
     '
@@ -333,7 +339,7 @@ generate() {
         if ( cmdresult != "" ) {
             description=cmdresult
         }
-        getcommand="curl -LsSf https://sh.stack.pl/"name" | sh "
+        getcommand="curl -LsSf $PAGE_URL/"name" | sh "
         print "      <li class=\"row\" role=\"row\">"
         print "        <a class=\"col name\" role=\"cell\" href=\" " name " \" title=\""name " " version "\">" name "</a>"
         print "        <span class=\"col desc\" role=\"cell\">"
@@ -385,9 +391,6 @@ case "${1:-}" in
         help-script
         ;;
     *)
-        echo "$DESCRIPTION"
-        echo
-        echo "Run  'sync.sh help'  for usage instructions"
-        echo
+        generate
         ;;
 esac

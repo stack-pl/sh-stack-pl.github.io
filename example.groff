@@ -1,0 +1,138 @@
+\# Ref: https://www.gnu.org/software/groff/manual/html_node/gtroff-Reference.html
+\# Ref: `man 7 groff`
+\# Basic groff file that can be used for formatting a plain text document.
+\# These are some sane defaults and examples for writing documents.
+\#
+\# Hyphenation modes 1, 4, 8 enabled
+\# Eg., Do not hyphenate the first or last two letters.
+.hy 12
+\#
+\# Number of characters per-line in the \nl register.
+.nr l 55
+\#
+\# Set the line lenth to \nl
+.ll \nl
+\#
+\# Spacing between words should always be one.
+.nr word 12
+\#
+\# Spacing between sentences should always be two.
+.nr sent 12
+\# Turn off output-line adjusting. This can add weird
+\# double-spaces between random words to fill the line
+\# better, like a newspaper might do.
+.na
+\#
+\# Macro .H1 that draws '=' across the page
+.de H1
+.  ss 0 0
+.  nr num \nl
+.  sp
+.  while (\\n[num] > 0) \{\
+=
+.    nr num -1
+.  \}
+.  sp
+.  ss \n[word] \n[sent]
+..
+\#
+\# Macro .H2 that draws '-' across the page
+.de H2
+.  ss 0 0
+.  nr num \nl
+.  sp
+.  while (\\n[num] > 0) \{\
+-
+.    nr num -1
+.  \}
+.  sp
+.  ss \n[word] \n[sent]
+..
+\# BEGIN THE DOCUMENT
+\#
+\# Add a blank line
+.sp
+\# Center the next line of text
+.ce
+\# Apply H1 macro
+GROFF TEST
+.H1
+This is a test groff document that can be processed by groff and output as any number of final formats.
+In this case I am interested in the ASCII output for rendering nice-looking README.txt pages.
+\# Add a blank line
+.sp
+\# Indent all following lines by two spaces.
+.in +2
+This instruction block is entirely indented by 2 spaces.
+To generate the text file, run:
+\# Adds a break so that the code appears on its own
+.br
+groff -Tascii example.groff > example.txt
+\# Reduce indentation by two to bring the document back to its original state.
+.in -2
+\# Apply the H2 macro.
+.H2
+\# Temporary indent by two.
+.ti 2
+This paragraph is indented in the classic literary style of formatting.
+To do this, apply `.ti 2` --- this will indent the beginning of the paragraph but not any subsequent lines.
+\# Apply the H2 macro.
+.H2
+Why use Groff?
+\# Add a blank line.
+.sp
+\# Indent by six.
+.in +6
+\# Reduce line-length by six.
+.ll -6
+Groff already knows how to do stuff like text filling and justification.
+It can make centered blocks for quoted text easily.
+Just apply `.in +6` (indent by 6) and `.ll -6` (reduce line length by 6) to do so.
+We wouldn't be able to do that without trouble in just Markdown.
+\# Bring document back to normal by resetting the indentation and line-length.
+.in -6
+.ll +6
+\# Apply the H2 macro.
+.H2
+\# Right justify the following lines of text.
+.ad r
+\# Indent by twelve spaces.
+.in +12
+This paragraph should be right-justified and indented by the way.
+\# Reset indentation
+.in -12
+\# Back to left-justified text.
+.ad l
+\# Add a blank line.
+.sp
+And now we are back to normal.
+\# Add a blank line.
+.sp
+A Ruby code block could be numbered with `.nm +1` and `.nf`.
+\# Add a blank line.
+.sp
+\# Indent by two.
+.in +2
+\# Reduce line-length by two.
+.ll -2
+\# Start printing line numbers by one.
+.nm +1
+\# Turn off filling so code is rendered accurately.
+.nf
+class Foo
+  def initialize(str)
+    @str = str
+  end
+end
+\# Restore indentation and line-length
+.in -2
+.ll -2
+\# Turn line numbers off.
+.nm
+\# Turn fill-mode back on.
+.fi
+\# Add a blank line.
+.sp
+That's all for now.
+\# Little 'trick' - set page lenght as current lines precessed.
+.pl \n[nl]u

@@ -6,7 +6,7 @@
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.7"
+VERSION="1.0.8"
 DESCRIPTION="Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums."
 PAGE_URL="https://sh.stack.pl"
 
@@ -209,9 +209,11 @@ update_script() {
 }
 
 generate() {
+    url="$PAGE_URL"
     echo "Generating index.html..."
     find . -type f -name "*" \
             -not -name '*index.html*' \
+            -not -name '*index.sh*' \
             -not -path '*.sha256' \
             -not -path './.*' \
             -not -name '*CNAME*' \
@@ -307,6 +309,7 @@ generate() {
         print "      </li>"
     }
     {
+        wwwurl="'"$url"'"
         n=split($0, pathArray, "/")
         name=pathArray[n]
         cmdresult="";
@@ -339,7 +342,7 @@ generate() {
         if ( cmdresult != "" ) {
             description=cmdresult
         }
-        getcommand="curl -LsSf $PAGE_URL/"name" | sh "
+        getcommand="curl -LsSf " wwwurl "/" name " | sh "
         print "      <li class=\"row\" role=\"row\">"
         print "        <a class=\"col name\" role=\"cell\" href=\" " name " \" title=\""name " " version "\">" name "</a>"
         print "        <span class=\"col desc\" role=\"cell\">"
@@ -352,8 +355,7 @@ generate() {
         print "    </ul>"
         print "  </body>"
         print "</html>"
-    }
-    ' > index.html
+    }' > index.html
     echo "index.html generated successfully."
 }
 

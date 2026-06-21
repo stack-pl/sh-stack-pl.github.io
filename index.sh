@@ -6,7 +6,7 @@
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.0.4"
+VERSION="1.0.5"
 DESCRIPTION="Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums."
 
 UPDATE_URL="https://sh.stack.pl/index.sh"
@@ -208,7 +208,7 @@ update_script() {
 
 generate() {
     echo "Generating index.html..."
-    find . -type f -name "*.sh" -not -name '*index.html*' -not -path '*.sha256' -not -path './.*' \
+    find . -type f -name "*" -not -name '*index.html*' -not -path '*.sha256' -not -path './.*' \
     | sort \
     | awk \
     '

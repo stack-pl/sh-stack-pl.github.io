@@ -211,13 +211,11 @@ update_script() {
 generate() {
     url="$PAGE_URL"
     echo "Generating index.html..."
-    find . -type f -name "*" \
-            -not -name '*index.html*' \
-            -not -name '*index.sh*' \
-            -not -path '*.sha256' \
-            -not -path './.*' \
-            -not -name '*CNAME*' \
-    | sort \
+    echo -e \
+    "./bsync" '\n' \
+    "./justjustify.sh" '\n' \
+    | sed '/^[[:blank:]]*$/d' \
+    | awk '{$1=$1; print}' \
     | awk \
     '
     BEGIN {
@@ -320,7 +318,7 @@ generate() {
         }
         split(cmdresult, row, " ");
         digest=row[1]
-        cmd="echo \047" cmdresult "\047> " name ".sha256" ;
+        cmd="echo \047" cmdresult "\047 > \047" name ".sha256\047" ;
         system(cmd);
         cmdresult="";
         cmd="grep ^VERSION= " name " | head -n1 | cut -d\047\042\047 -f2" ;

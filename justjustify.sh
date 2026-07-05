@@ -6,6 +6,9 @@
 # Example:  cat text.input | ./justjustify.sh 19 "    echo \"" "\""
 #           cat text.input | ./justjustify.sh 19 "# " " #"
 
+VERSION="1.0.1"
+DESCRIPTION="Read lines from stdin, justify the whole text with a specified width, and add prefix and suffix to each new line."
+
 content=$(cat) # Read all input at once
 
 

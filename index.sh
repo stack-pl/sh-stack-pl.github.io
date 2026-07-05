@@ -6,7 +6,7 @@
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.0"
+VERSION="1.1.1"
 DESCRIPTION="Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums."
 PAGE_URL="https://sh.stack.pl"
 
@@ -340,7 +340,7 @@ generate() {
         if ( cmdresult != "" ) {
             description=cmdresult
         }
-        getcommand="curl -LsSf " wwwurl "/" name " | sh "
+        getcommand="curl " wwwurl "/" name " | sh "
         print "      <li class=\"row\" role=\"row\">"
         print "        <a class=\"col name\" role=\"cell\" href=\" " name " \" title=\""name " " version "\">" name "</a>"
         print "        <span class=\"col desc\" role=\"cell\">"

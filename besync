@@ -65,15 +65,18 @@ local_repository_branch="main"
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-FILE="bsync"
-VERSION="1.2.1"
+FILE="besync"
+VERSION="1.2.2"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
-UPDATE_URL="https://sh.stack.pl/bsync"
+UPDATE_URL="https://sh.stack.pl/besync"
 SHA256_URL="${UPDATE_URL}.sha256"
 
 # This is the name of the configuration file that will be created in each project directory to store the project settings.
-CONFIG=".bsync"
+CONFIG_DIR='.besync'
+CONFIG="${CONFIG_DIR}/config"
+CONFIG_PULL="${CONFIG_DIR}/pull"
+CONFIG_PUSH="${CONFIG_DIR}/push"
 
 BACKUP_PATH="${SCRIPT_PATH}.bak"
 LOCK_FILE="/tmp/${SCRIPT_NAME}.lock"
@@ -321,12 +324,13 @@ load_config() {
     config_file="$project_name/$CONFIG"
     if [[ ! -f $config_file ]]; then
         echo "Configuration file '$config_file' does not exist. "
-        echo "Please initialize the project first using:  'sync.sh init $project_name'"
+        echo "Please initialize the project first using:  '$FILE init $project_name'"
         exit 1
     fi
     source "$config_file"
 }
 save_config() {
+    mkdir -p $project_name/$CONFIG_DIR
     config_file="$project_name/$CONFIG"
     {
         echo "# This is your project configuration for $FILE command. You can edit this file to change the settings."
@@ -436,7 +440,7 @@ look_for_project_name() {
             cd ..
         fi
         if [[  $(pwd) == "/" ]]; then
-            echo "There is no bsync project in this path."
+            echo "There is no $FILE project in this path."
             break
         fi
     done
@@ -455,7 +459,7 @@ init() {
     project_name=""
     look_for_project_name
     if [[ -n "$project_name" ]]; then
-        echo "You are already in a bsync project: $(pwd)/$project_name"
+        echo "You are already in a $FILE project: $(pwd)/$project_name"
         echo "If you proceed, you will initialize a new project $new_pwd/$new_project_name inside the existing project."
         echo "This may lead to confusion and potential issues with file synchronization."
         echo 
@@ -786,7 +790,7 @@ status() {
          echo "       $(full_path "$project_name/$local_deploy_dir") "
     else
          echo "       NOT INITIALIZED"
-         echo "         (use 'bsync backup2deploy' or 'bsync repo2deploy')"
+         echo "         (use '$FILE backup2deploy' or '$FILE repo2deploy')"
     fi
     echo
     echo "  \_ rotate  (snapshots of backup and deploy directories):"
@@ -794,7 +798,7 @@ status() {
          echo "       $(full_path "$project_name/$local_rotate_dir") "
     else
          echo "       NONE"
-         echo "         (use 'bsync rotate')"
+         echo "         (use '$FILE rotate')"
     fi
     echo
     echo "  \_ repository  (development folder):"
@@ -803,7 +807,7 @@ status() {
          echo '       branch: $local_repository_branch, subdirectory: $local_repository_deploy_path'
     else
          echo "       NO REPOSITORY FOUND"
-         echo "         (use 'bsync re-init <project_name>' to add/change repository path and branch)"
+         echo "         (use '$FILE re-init <project_name>' to add/change repository path and branch)"
     fi
     echo
     echo
@@ -1218,8 +1222,8 @@ case "${1:-}" in
         ;;
     *)
         if [[ ! -n "$BASH_SOURCE" ]] && [[ ! "$0" = "$BASH_SOURCE" ]] && [[ -p "/dev/stdin" ]]; then
-            # Install from official URL: curl -LsSf https://sh.stack.pl/bsync | sh
-            # Local installation (overwrites itself): cat ./bsync | sh
+            # Install from official URL: curl -LsSf https://sh.stack.pl/besync | sh
+            # Local installation (overwrites itself): cat ./besync | sh
             self_install
         else
             help

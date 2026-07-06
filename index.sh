@@ -6,7 +6,7 @@
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.1"
+VERSION="1.1.2"
 DESCRIPTION="Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums."
 PAGE_URL="https://sh.stack.pl"
 
@@ -112,15 +112,15 @@ print_version() {
 # Pobieranie
 # ==================================================
 download_files() {
-    echo curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
-    curl -fsSL "$UPDATE_URL" -o "$TMP_FILE"
+    echo curl "$UPDATE_URL" -o "$TMP_FILE"
+    curl "$UPDATE_URL" -o "$TMP_FILE"
     if [ $? -ne 0 ]; then
         echo "BŁĄD: Nie można pobrać aktualizacji z $UPDATE_URL"
         cleanup
         exit 1 || return 1
     fi
-    echo curl -fsSL "$SHA256_URL" -o "$TMP_HASH"
-    curl -fsSL "$SHA256_URL" -o "$TMP_HASH"
+    echo curl "$SHA256_URL" -o "$TMP_HASH"
+    curl "$SHA256_URL" -o "$TMP_HASH"
     if [ $? -ne 0 ]; then
         echo "BŁĄD: Nie można pobrać sumy kontrolnej z $SHA256_URL"
         cleanup
@@ -212,7 +212,7 @@ generate() {
     url="$PAGE_URL"
     echo "Generating index.html..."
     echo -e \
-    "./bsync" '\n' \
+    "./besync" '\n' \
     "./justjustify.sh" '\n' \
     | sed '/^[[:blank:]]*$/d' \
     | awk '{$1=$1; print}' \

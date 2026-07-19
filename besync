@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.2"
+VERSION="1.2.3"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -471,9 +471,11 @@ init() {
             echo "Cancelled" >&2 && \
             exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
         fi
-        cd "$new_pwd"
-        project_name=$new_project_name 
+
     fi
+
+    cd "$new_pwd"
+    project_name=$new_project_name 
 
     if [[ -d $project_name ]]; then
         echo "Directory '$project_name' already exists. Please choose a different name or remove it before initializing."
@@ -606,8 +608,8 @@ deploy() {
 
     if [[ ! -d "$project_name/$local_deploy_dir" ]]; then 
         echo "Project '$project_name' is initialized for backup (downloading files) only and"
-        echo "does not have a local deploy directory. Please initialize the project for deploying"
-        echo "functionality by command:"
+        echo "does not have a local deploy directory. Please initialize the project for"
+        echo "deploying functionality by command:"
         echo "    $FILE init-deploy $project_name"
         echo "or copy files you want into "
         echo "    $project_name/$local_deploy_dir"
@@ -1107,7 +1109,7 @@ path_update() {
         echo "Put the file you running into one of paths above or install the script"
         echo "directly from website:"
         echo 
-        echo "curl -LsSf https://sh.stack.pl/$FILE | sh"
+        echo "curl -LsSf https://sh.stack.pl/$FILE | bash"
         echo
         exit 1 || return 1
     fi
@@ -1164,7 +1166,7 @@ self_install() {
 
     if [[ ! ":$PATH:" == *":$installdir1:"* ]] && [[ ! ":$PATH:" == *":$installdir2:"* ]]; then
         echo
-        echo "To run sync.sh from any directory, you must update PATH."
+        echo "To run $FILE from any directory, you must update PATH."
         echo "One way to accomplish this is to use the script that has just been installed:" 
         echo
         echo "~/$dir/$FILE ADDPATH"

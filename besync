@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.5"
+VERSION="1.2.6"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -82,6 +82,8 @@ BACKUP_PATH="${SCRIPT_PATH}.bak"
 LOCK_FILE="/tmp/${SCRIPT_NAME}.lock"
 TMP_FILE="$(mktemp)"
 TMP_HASH="$(mktemp)"
+
+EXTERNAL_DEPLOY_SCRIPT="${FILE}_external_deploy.sh"
 
 echo_cmd() {
     echo "$@" >&2
@@ -371,6 +373,38 @@ save_config() {
     echo
     echo "  Saving configuration in $config_file file".
 }
+save_external_deploy_script() {
+    mkdir -p $project_name/$local_deploy_dir
+    external_script_file="$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT"
+    if [[ ! -f $external_script_file ]]; then
+        {
+            echo "#!/bin/bash"
+            echo "# This is an external deploy script for $FILE command."
+            echo "# You can edit this file to add custom commands to be executed when you run '$FILE deploy'."
+            echo
+            echo "# The following is an example of how this file can look with custom commands:"
+            echo
+            echo "#   cd $USER/project/"
+            echo "#   npm run build"
+            echo "#   if [[ \$? -ne 0 ]]; then"
+            echo "#       echo \"Build failed. Aborting deployment.\""
+            echo "#       exit 1"
+            echo "#   fi"
+            echo "#   echo \"Deploy: assets ...\""
+            echo "#   rsync -avz -e ssh --partial $USER/project/dist/ $remote_ssh_user@$remote_ssh_host:$remote_dir/assets/"
+            echo "#   echo \"Deploy: index.html and images ...\""
+            echo "#   rsync -avz -e ssh --partial --include=\"*/\" --include=\"images/\" --exclude=\"*\" $USER/project/ $remote_ssh_user@$remote_ssh_host:$remote_dir/"
+
+            echo "# Add your custom commands below this line."
+        } > $external_script_file
+        chmod +x $external_script_file
+        echo
+        echo "  Saving external deploy script in $external_script_file file".
+    else
+        echo
+        echo "  External deploy script already exists in $external_script_file file. No changes made."
+    fi
+}
 read_interactive_settings() {
     read -p "REMOTE SSH HOST [$remote_ssh_host]: " -r
     if [[ ! $REPLY =~ ^$ ]]
@@ -581,7 +615,6 @@ backup() {
         -e ssh  \
         --partial \
         --exclude=.git \
-        --info=progress3,stats0 \
         $2 \
         $3 \
         $4 \
@@ -617,44 +650,51 @@ deploy() {
         exit 1 || return 1
     fi
 
-    echo -e "Upload data:"
-    echo    
-    echo "SRC: $project_name/$local_deploy_dir"
-    echo "  \___>>>___"
-    echo "            \ "       
-    echo "           DEST: $remote_ssh_host:$remote_dir"
-    echo
+    if [[ ! -f "$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT" ]]; then 
+        echo -e "Upload data:"
+        echo    
+        echo "SRC: $project_name/$local_deploy_dir"
+        echo "  \___>>>___"
+        echo "            \ "       
+        echo "           DEST: $remote_ssh_host:$remote_dir"
+        echo
 
-    if [[ -n "$8" ]]; then
-        echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
-        echo "Example:  $FILE backup my_project --delete --exclude=cache/"
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+        if [[ -n "$8" ]]; then
+            echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
+            echo "Example:  $FILE backup my_project --delete --exclude=cache/"
+            exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+        fi
+
+
+
+        if [[ -n "$8" ]]; then
+            echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
+            echo "Example:  $FILE deploy my_project --delete --exclude=.*//"
+            exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+        fi
+
+        # echo "****** RSYNC **** (deploy -> server) ***"
+
+        confirm_cmd rsync -avz \
+            -e ssh \
+            --partial \
+            --exclude=.git \
+            $2 \
+            $3 \
+            $4 \
+            $5 \
+            $6 \
+            $7 \
+            $project_name/$local_deploy_dir \
+            $remote_ssh_user@$remote_ssh_host:$remote_dir
+    else
+        echo "The file '$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT' exists."
+        echo "This indicates that the deployment is managed by an external script."
+        echo
+        echo "Running '$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT' the external deploy script to handle the deployment process."
+        echo
+        confirm_cmd bash "$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT"
     fi
-
-
-
-    if [[ -n "$8" ]]; then
-        echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
-        echo "Example:  $FILE deploy my_project --delete --exclude=.*//"
-        exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    fi
-
-    # echo "****** RSYNC **** (deploy -> server) ***"
-
-    confirm_cmd rsync -avz \
-        --chown=$remote_files_owner:$remote_files_group \
-        -e ssh \
-        --partial \
-        --exclude=.git \
-        --info=progress3,stats0 \
-        $2 \
-        $3 \
-        $4 \
-        $5 \
-        $6 \
-        $7 \
-        $project_name/$local_deploy_dir \
-        $remote_ssh_user@$remote_ssh_host:$remote_dir
 }
 
 repo2deploy() {
@@ -677,21 +717,6 @@ repo2deploy() {
     echo "Checking out branch '$local_repository_branch' in local repository at '$local_repository_base_path'."
     echo_cmd git -C "$local_repository_base_path" checkout "$local_repository_branch" > /dev/null 2>&1
     echo
-    # echo "****** RSYNC *** (repo -> deploy) ***"
-    # echo rsync -avz \
-    #     --exclude=".*" \
-    #     "$local_repository_base_path$local_repository_deploy_path" \
-    #     "$project_name/$local_deploy_dir"
-    # echo "********************"
-    # echo
-    # read -p "Copying files from local repository... Continue? [yes/NO]: " -r
-    # echo 
-    # if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
-    # then
-    #     [[ "$0" = "$BASH_SOURCE" ]] && \
-    #     echo "Cancelled" && \
-    #     exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    # fi
 
     confirm_cmd rsync -avz \
         --exclude=".*" \
@@ -699,6 +724,18 @@ repo2deploy() {
         "$project_name/$local_deploy_dir"
 
     echo "Done. You can now run '$FILE deploy $project_name' to upload files to the server."
+}
+
+external2deploy() {
+    project_name=${1%/} 
+
+    if [[ ! -n "$project_name" ]]; then
+        look_for_project_name
+    fi
+
+    load_config
+
+    save_external_deploy_script
 }
 
 rotate() {
@@ -739,20 +776,6 @@ clear_metadata() {
     echo "WARNING: This will permanently remove all metadata in:"
     echo "  '$project_name/$local_deploy_dir'."
     echo
-    # echo "****** ExifTool ****** ( deploy directory ) ******"
-    # echo exiftool -all= -r "$project_name/$local_deploy_dir" \
-    #         -overwrite_original_in_place \
-    #         -i SYMLINKS
-    # echo "**************************************************"
-    # echo
-    # read -p "Continue? [yes/NO]: " -r
-    # echo 
-    # if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]
-    # then
-    #     [[ "$0" = "$BASH_SOURCE" ]] && \
-    #     echo -e "Cancelled. No files changed" && \
-    #     exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
-    # fi
 
     confirm_cmd exiftool -all= -r "$project_name/$local_deploy_dir" \
         -overwrite_original_in_place \
@@ -790,9 +813,12 @@ status() {
     echo "  \_ deploy  (filles that will be pushed to server):"
     if [[ -d "$project_name/$local_deploy_dir" ]]; then
          echo "       $(full_path "$project_name/$local_deploy_dir") "
+         if [[ -f "$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT" ]]; then
+             echo "       (External deploy script: $project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT)"
+         fi
     else
          echo "       NOT INITIALIZED"
-         echo "         (use '$FILE backup2deploy' or '$FILE repo2deploy')"
+         echo "         (use '$FILE backup2deploy, repo2deploy, or external2deploy')"
     fi
     echo
     echo "  \_ rotate  (snapshots of backup and deploy directories):"
@@ -809,7 +835,7 @@ status() {
          echo '       branch: $local_repository_branch, subdirectory: $local_repository_deploy_path'
     else
          echo "       NO REPOSITORY FOUND"
-         echo "         (use '$FILE re-init <project_name>' to add/change repository path and branch)"
+         echo "         (use '$FILE re-init <project_name>' to add/change repository)"
     fi
     echo
     echo
@@ -925,9 +951,6 @@ help() {
             ;;
         repo2deploy)
             help_repo2deploy
-            ;;
-        clone)
-            help_clone
             ;;
         deploy)
             help_deploy
@@ -1052,27 +1075,26 @@ help_default() {
   echo " $FILE COMMAND [ PARAMS ]"
   echo
   echo "COMMAND:"
-  echo "   help                 - show this help message"
-  echo "   help <command>       - show info about provided command,"
-  echo "                          for example '$FILE help init'"
-  echo "   init <dir>           - initialize an empty project with given name,"
-  echo "   re-init <dir>        - re-initialize existing project with given name,"
-  echo "                          (update the existing configuration);"
-  echo "   backup <dir> [args]  - download files from server to local directory;"
-  echo "                          (backup); pass optional args for rsync"
-  echo "   backup2deploy <dir>  - copy backup files into deploy directory;" 
-  echo "                          (will overwrite existing ones);"
-  echo "   repo2deploy <dir>    - copy git repository files into deploy directory"
-  echo "                          (will overwrite existing ones);"
-  echo "   clone <dir>          - init + backup2deploy equivalent;"
-  echo "   clear_metadata <dir> - clear meta information from files in deploy directory"
-  echo "                          (overwrites files; requires exiftool)"
-  echo "   deploy <dir> [args]  - upload files from local directory to server;"
-  echo "                          (deploy); pass optional args for rsync"
-  echo "   rotate <dir>         - make project copy (both backup and deploy directories)"
-  echo "   status <dir>         - show project info and settings"
-  echo "   update               - update this script to the latest version"
-  echo "   version              - show script version"
+  echo "   help                  - show this help message"
+  echo "   help <command>        - show info about provided command,"
+  echo "                           for example '$FILE help init'"
+  echo "   init <dir>            - initialize an empty project with given name,"
+  echo "   re-init <dir>         - re-initialize existing project with given name,"
+  echo "                           (update the existing configuration);"
+  echo "   backup <dir> [args]   - download files from server to local directory;"
+  echo "                           (backup); pass optional args for rsync"
+  echo "   backup2deploy <dir>   - copy backup files into deploy directory;" 
+  echo "                           (will overwrite existing ones);"
+  echo "   repo2deploy <dir>     - copy git repository files into deploy directory"
+  echo "                           (will overwrite existing ones);"
+  echo "   external2deploy <dir> - create external deploy script in deploy directory"
+  echo "   clear_metadata <dir>  - clear meta information from files in deploy directory"
+  echo "                           (overwrites files; requires exiftool)"
+  echo "   deploy <dir> [args]   - start deployment; pass optional args for rsync"
+  echo "   rotate <dir>          - make project copy (both backup and deploy directories)"
+  echo "   status <dir>          - show project info and settings"
+  echo "   update                - update this script to the latest version"
+  echo "   version               - show script version"
   echo 
   echo "SETUP:"
   echo "  To set up a new project,  run '$FILE init <projectname>'.  This will create"
@@ -1114,19 +1136,26 @@ path_update() {
         exit 1 || return 1
     fi
 
-    source $HOME/.bashrc
+    if [[ -f $HOME/.bashrc ]]; then
+        source $HOME/.bashrc
+    fi
+
 
     if [[ ! ":$PATH:" == *":$localbinpath:"* ]]; then
         echo "The new directory will be appended to the default PATH used to locate executable commands."
         echo "To do so, the file $HOME/.bashrc will be changed:"
-        # echo "echo export PATH=\$PATH:$localbinpath >> $HOME/.bashrc"
-        # echo export PATH=\$PATH:$localbinpath >> $HOME/.bashrc
-        echo "Your .bashrc file will be looks like below:"
-        echo "------ BEGIN ~/.bashrc -----"
-        cat $HOME/.bashrc | sed "\$a export PATH=\$PATH:$localbinpath"
-        echo "------- END ~/.bashrc ------"
-        confirm_cmd sed -i "\$a export PATH=\$PATH:$localbinpath"  $HOME/.bashrc
-        source $HOME/.bashrc
+        if [[ ! -f $HOME/.bashrc ]]; then
+            echo "  Creating new file $HOME/.bashrc"
+            echo "echo export PATH=\$PATH:$localbinpath >> $HOME/.bashrc"
+            echo export PATH=\$PATH:$localbinpath >> $HOME/.bashrc
+        else
+            echo "Your .bashrc file will be looks like below:"
+            echo "------ BEGIN ~/.bashrc -----"
+            cat $HOME/.bashrc | sed "\$a export PATH=\$PATH:$localbinpath"
+            echo "------- END ~/.bashrc ------"
+            confirm_cmd sed -i "\$a export PATH=\$PATH:$localbinpath"  $HOME/.bashrc
+            source $HOME/.bashrc
+        fi
     else
         echo "The requested directory ($localbinpath) is already in PATH. No changes made."
     fi
@@ -1181,13 +1210,6 @@ case "${1:-}" in
         ;;
     backup2deploy)
         backup2deploy $2
-        ;;   
-    clone)
-        init $2
-        backup $2 $3 $4 $5 $6 $7 $8 $9
-        backup2deploy $2
-        rotate $2
-        status $2
         ;;
     clear-metadata)
         clear_metadata $2
@@ -1197,6 +1219,9 @@ case "${1:-}" in
         ;;
     repo2deploy)
         repo2deploy $2
+        ;; 
+    external2deploy)
+        external2deploy $2
         ;; 
     help)
         help $2

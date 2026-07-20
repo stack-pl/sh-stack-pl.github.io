@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.7"
+VERSION="1.2.8"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -394,7 +394,6 @@ save_external_deploy_script() {
             echo "#   rsync -avz -e ssh --partial $USER/project/dist/ $remote_ssh_user@$remote_ssh_host:$remote_dir/assets/"
             echo "#   echo \"Deploy: index.html and images ...\""
             echo "#   rsync -avz -e ssh --partial --include=\"*/\" --include=\"images/\" --exclude=\"*\" $USER/project/ $remote_ssh_user@$remote_ssh_host:$remote_dir/"
-
             echo "# Add your custom commands below this line."
         } > $external_script_file
         chmod +x $external_script_file
@@ -605,16 +604,13 @@ backup() {
 
     if [[ -n "$8" ]]; then
         echo "Too many arguments. Please provide up to 6 extra arguments for rsync options."
-        echo "Example:  $FILE backup my_project --delete --exclude=cache/"
+        echo "Example:  $FILE backup my_project --delete --exclude=cache/ --exclude=*.log"
         exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
     fi
-
-    # echo "****** RSYNC **** (server -> backup) ***"
 
     confirm_cmd rsync -avz -og \
         -e ssh  \
         --partial \
-        --exclude=.git \
         $2 \
         $3 \
         $4 \
@@ -643,10 +639,14 @@ deploy() {
         echo "Project '$project_name' is initialized for backup (downloading files) only and"
         echo "does not have a local deploy directory. Please initialize the project for"
         echo "deploying functionality by command:"
-        echo "    $FILE init-deploy $project_name"
-        echo "or copy files you want into "
-        echo "    $project_name/$local_deploy_dir"
-        echo "and try again."
+        echo "    $FILE backup2deploy $project_name"
+        echo "to copy files from the backup directory to the deploy directory, or"
+        echo
+        echo "    $FILE repo2deploy $project_name"
+        echo "to copy files from a local Git repository to the deploy directory, or"
+        echo
+        echo "    $FILE external2deploy $project_name"
+        echo "to create a bash script in the deploy directory that handles deployment."
         exit 1 || return 1
     fi
 
@@ -688,7 +688,7 @@ deploy() {
             $project_name/$local_deploy_dir \
             $remote_ssh_user@$remote_ssh_host:$remote_dir
     else
-        echo "The file '$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT' exists."
+        echo "The file '$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT' found."
         echo "This indicates that the deployment is managed by an external script."
         echo
         echo "Running '$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT' the external deploy script to handle the deployment process."

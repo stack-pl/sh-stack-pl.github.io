@@ -6,7 +6,7 @@
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
-VERSION="1.1.3"
+VERSION="1.1.4"
 DESCRIPTION="Generate index.html with links to all .sh files in the current directory and subdirectories, along with their SHA-256 checksums."
 PAGE_URL="https://sh.stack.pl"
 

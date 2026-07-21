@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.10"
+VERSION="1.2.11"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -83,7 +83,7 @@ LOCK_FILE="/tmp/${SCRIPT_NAME}.lock"
 TMP_FILE="$(mktemp)"
 TMP_HASH="$(mktemp)"
 
-EXTERNAL_DEPLOY_SCRIPT="${FILE}_external_deploy.sh"
+EXTERNAL_DEPLOY_SCRIPT="deploy.sh"
 
 echo_cmd() {
     echo "$@" >&2
@@ -376,7 +376,7 @@ save_config() {
 }
 save_external_deploy_script() {
     mkdir -p $project_name/$local_deploy_dir
-    external_script_file="$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT"
+    external_script_file="${project_name}/${local_deploy_dir}${EXTERNAL_DEPLOY_SCRIPT}"
     if [[ ! -f $external_script_file ]]; then
         {
             echo "#!/bin/bash"
@@ -696,7 +696,7 @@ deploy() {
         echo "The file '$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT' found."
         echo "This indicates that the deployment is managed by an external script."
         echo
-        echo "Running '$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT' the external deploy script to handle the deployment process."
+        echo "Running '$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT' to handle the deployment process."
         echo
         confirm_cmd bash "$project_name/$local_deploy_dir$EXTERNAL_DEPLOY_SCRIPT"
     fi

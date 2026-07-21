@@ -291,6 +291,7 @@ update_script() {
     trap - ERR
     echo_cmd rm "$BACKUP_PATH"
     echo "Aktualizacja zakończona sukcesem."
+    exit 0 || return 0
 }
 
 

@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.11"
+VERSION="1.2.12"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -337,7 +337,7 @@ save_config() {
     config_file="$project_name/$CONFIG"
     {
         echo "# This is your project configuration for $FILE command. You can edit this file to change the settings."
-        echo "# Generated automatically by $FILE on $(date +"%Y-%m-%d %H:%M:%S")"
+        echo "# Generated automatically by '$FILE init $project_name' on $(date +"%Y-%m-%d %H:%M:%S")"
         echo
         echo "# Remote SSH host (it can be an IP address, a domain name, or a hostname defined in your SSH config)."
         echo "remote_ssh_host=$remote_ssh_host"

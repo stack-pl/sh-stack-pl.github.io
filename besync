@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.13"
+VERSION="1.2.14"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -290,6 +290,8 @@ update_script() {
     echo_cmd chmod +x "$SCRIPT_PATH"
     trap - ERR
     echo_cmd rm "$BACKUP_PATH"
+    rm -f "$TMP_FILE" "$TMP_HASH"
+    trap - EXIT
     echo "Aktualizacja zakończona sukcesem."
     exit 0 || return 0
 }

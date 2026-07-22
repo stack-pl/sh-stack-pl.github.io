@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.17"
+VERSION="1.2.18"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -395,7 +395,7 @@ save_external_deploy_script() {
             echo "### END OF SETTINGS ###"
             echo
             echo "echo ====== Step 1/4: Build the project ...  ======"   
-            echo 'cd $HOME/$project/'
+            echo 'cd $project'
             echo "# npm run build"
             echo "if [[ \$? -ne 0 ]]; then"
             echo "    echo \"Deployment failed.\""
@@ -403,8 +403,8 @@ save_external_deploy_script() {
             echo "fi"
             echo ""
             echo "echo ====== Step 2/4: Start SSH agent and add your SSH deploy key to the agent ...  ======"
-            echo "# eval \$(ssh-agent)"
-            echo '# ssh-add $HOME/.ssh/id_ed25519'
+            echo "eval \$(ssh-agent)"
+            echo 'ssh-add $HOME/.ssh/id_ed25519'
             echo ""
             echo "echo ====== Step 3/4: Deploy the result of build to the server (rsync local -> server) ...  ======"
             echo '# rsync -avz -e ssh --partial $project/dist/ $ssh_user@$ssh_host:$ssh_dir/'

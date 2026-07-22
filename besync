@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.15"
+VERSION="1.2.16"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -387,20 +387,27 @@ save_external_deploy_script() {
             echo
             echo "# The following is an example of how this file can look with custom commands:"
             echo
+            echo " ### SETTINGS (EDIT THIS SECTION) ###"
+            echo 'project=$HOME/WebstormProjects/website3'
+            echo "ssh_host=sls"
+            echo "ssh_user=srv123456"
+            echo "ssh_dir=domains/example.com/public_html"
+            echo " ### END OF SETTINGS ###"
+            echo
             echo "# echo ====== Step 1/4: Build the project ...  ======"   
-            echo "# cd $HOME/project/"
+            echo '# cd $HOME/project/'
             echo "# npm run build"
             echo "# if [[ \$? -ne 0 ]]; then"
-            echo "#     echo \"Build failed. Aborting deployment.\""
+            echo "#     echo \"Deployment failed.\""
             echo "#     exit 1"
             echo "# fi"
             echo ""
             echo "# echo ====== Step 2/4: Start SSH agent and add your SSH deploy key to the agent ...  ======"
             echo "# eval \$(ssh-agent)"
-            echo "# ssh-add ~/.ssh/id_ed25519"
+            echo '# ssh-add $HOME/.ssh/id_ed25519'
             echo ""
             echo "# echo ====== Step 3/4: Deploy the result of build to the server (rsync local -> server) ...  ======"
-            echo "# rsync -avz -e ssh --partial $HOME/project/dist/ $remote_ssh_user@$remote_ssh_host:$remote_dir/assets/"
+            echo '# rsync -avz -e ssh --partial $project/dist/ $ssh_user@$ssh_host:$ssh_dir/'
             echo ""
             echo "# if [[ \$? -ne 0 ]]; then"
             echo "#     echo \"Deployment failed.\""
@@ -408,7 +415,7 @@ save_external_deploy_script() {
             echo "# fi"
             echo ""
             echo "# echo ====== Step 4/4: Deploy other files like images (rsync local -> server) ...  ======"
-            echo "# rsync -avz -e ssh --partial --include=\"*/\" --include=\"images/\" --exclude=\"*\" $HOME/project/ $remote_ssh_user@$remote_ssh_host:$remote_dir/"
+            echo '# rsync -avz -e ssh --partial $project/images/ $ssh_user@$ssh_host:$ssh_dir/images/'
             echo ""
             echo "# if [[ \$? -ne 0 ]]; then"
             echo "#     echo \"Deployment failed.\""

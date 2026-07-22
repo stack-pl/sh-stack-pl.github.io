@@ -1,0 +1,17 @@
+# Ignore everything
+*
+*/
+
+
+# but not these files...
+!.gitignore
+
+!besync
+!besync.sha256
+!CNAME
+!example.groff
+!index.html
+!index.sh
+!justjustify.sh
+!justjustify.sh.sha256
+!text.input

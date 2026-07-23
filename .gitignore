@@ -1,11 +1,12 @@
-# Ignore everything
+# Ignore everything ...
+
 *
 */
 
 
-# but not these files...
-!.gitignore
+# ... but these files...
 
+!.gitignore
 !besync
 !besync.sha256
 !CNAME

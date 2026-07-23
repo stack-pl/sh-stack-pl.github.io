@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.19"
+VERSION="1.2.20"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -382,14 +382,18 @@ save_external_deploy_script() {
     if [[ ! -f $external_script_file ]]; then
         {
             echo "#!/bin/bash"
-            echo "# This is an external deploy script for $FILE command."
-            echo "# You can edit this file to add custom commands to be executed when you run '$FILE deploy'."
             echo
-            echo "# The following is an example of how this file can look with custom commands:"
+            echo "# This is a deploy script for '$FILE' command."
+            echo "# You can edit this file to setup your own deployment process handled by"
+            echo "# '$FILE deploy'. However, the script is designed to work independently"
+            echo "# and should work fine when user runs it directly from a terminal."
             echo
+            echo "# The following is an example of how this file can look for the case of simple"
+            echo "# website deployment:"
             echo
-            echo "### SETTINGS (EDIT THIS SECTION) ###"
-            echo 'project=$HOME/WebstormProjects/website3'
+            echo 
+            echo "### SETTINGS ###"
+            echo 'project=$HOME/WebsiteProjects/website3'
             echo "ssh_host=sls"
             echo "ssh_user=srv123456"
             echo "ssh_dir=domains/example.com/public_html"

@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.20"
+VERSION="1.2.21"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -393,6 +393,16 @@ save_external_deploy_script() {
             echo
             echo 
             echo "### SETTINGS ###"
+            echo "# Please edit the following settings to match your project and server configuration."
+            echo "# project:  the local path to your project directory. This is where your build"
+            echo "#           process will run and where the files to be deployed are located."
+            echo "#           Example: project=\$HOME/WebsiteProjects/website3"
+            echo "# ssh_host: the hostname or IP address of your remote server."
+            echo "#           This can also be an alias defined in your SSH config: ~/.ssh/config"
+            echo "#           where you can define the hostname, port, private key and other SSH options."
+            echo "# ssh_user: the SSH user for your remote server."
+            echo "# ssh_dir:  the directory on the remote server where files will be deployed."
+            echo "#           Example: ssh_dir=domains/example.com/public_html"
             echo 'project=$HOME/WebsiteProjects/website3'
             echo "ssh_host=sls"
             echo "ssh_user=srv123456"

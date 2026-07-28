@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.21"
+VERSION="1.2.22"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -424,6 +424,11 @@ save_external_deploy_script() {
             echo '    "$@"'
             echo '}'    
             echo
+            echo 'echo_cmd() {'
+            echo '    echo "$@" >&2'
+            echo '    "$@"'
+            echo '}'
+            echo
             echo "echo ====== Step 1/4: Build the project ...  ======"   
             echo 'cd $project'
             echo "# npm run build"
@@ -478,20 +483,20 @@ read_interactive_settings() {
     then
         remote_dir=$REPLY
     fi
-    read -p "REMOTE FILES OWNER [$remote_ssh_user]: " -r
-    if [[ $REPLY =~ ^$ ]]
-    then
-        remote_files_owner=$remote_ssh_user
-    else
-        remote_files_owner=$REPLY
-    fi
-    read -p "REMOTE FILES GROUP [$remote_ssh_user]: " -r
-    if [[ $REPLY =~ ^$ ]]
-    then
-        remote_files_group=$remote_ssh_user
-    else
-        remote_files_group=$REPLY
-    fi
+    # read -p "REMOTE FILES OWNER [$remote_ssh_user]: " -r
+    # if [[ $REPLY =~ ^$ ]]
+    # then
+    #     remote_files_owner=$remote_ssh_user
+    # else
+    #     remote_files_owner=$REPLY
+    # fi
+    # read -p "REMOTE FILES GROUP [$remote_ssh_user]: " -r
+    # if [[ $REPLY =~ ^$ ]]
+    # then
+    #     remote_files_group=$remote_ssh_user
+    # else
+    #     remote_files_group=$REPLY
+    # fi
 
     read -p "(OPTIONAL) LOCAL REPOSITORY BASE PATH [$local_repository_base_path]: " -r
     if [[ $REPLY =~ ^$ ]]
@@ -901,8 +906,8 @@ status() {
     echo "  SSH HOST:      $remote_ssh_host"
     echo "  SSH USER:      $remote_ssh_user"
     echo "  DIR:           $remote_dir"
-    echo "    \_ chown (owner):  $remote_files_owner"
-    echo "    \_ chgrp (group):  $remote_files_group"
+    # echo "    \_ chown (owner):  $remote_files_owner"
+    # echo "    \_ chgrp (group):  $remote_files_group"
     echo
     echo 
 

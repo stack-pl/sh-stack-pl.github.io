@@ -66,7 +66,7 @@ SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(realpath "$0")"
 
 FILE="besync"
-VERSION="1.2.22"
+VERSION="1.2.23"
 DESCRIPTION="Script for synchronizing files between a local directory and a remote server using rsync and SSH. It includes features like backup, deploy, rotate."
 
 UPDATE_URL="https://sh.stack.pl/besync"
@@ -397,16 +397,23 @@ save_external_deploy_script() {
             echo "# project:  the local path to your project directory. This is where your build"
             echo "#           process will run and where the files to be deployed are located."
             echo "#           Example: project=\$HOME/WebsiteProjects/website3"
-            echo "# ssh_host: the hostname or IP address of your remote server."
-            echo "#           This can also be an alias defined in your SSH config: ~/.ssh/config"
-            echo "#           where you can define the hostname, port, private key and other SSH options."
-            echo "# ssh_user: the SSH user for your remote server."
-            echo "# ssh_dir:  the directory on the remote server where files will be deployed."
-            echo "#           Example: ssh_dir=domains/example.com/public_html"
+            echo "# server: the hostname alias defined in your SSH config: ~/.ssh/config"
+            echo "#           where you can define the server address (hostname), port, private key"
+            echo "#           and other SSH options. Your SSH config file can look like this:"
+            echo "#           ---------------------------------------"
+            echo "#           Host sls"
+            echo "#               HostName example.com"
+            echo "#               User srv123456"
+            echo "#               Port 22"
+            echo "#               IdentityFile \$HOME/.ssh/id_ed25519"
+            echo "#           IdentitiesOnly yes"
+            echo "#           AddKeysToAgent yes"
+            echo "#           ---------------------------------------"
+            echo "# server_dir:  the directory on the remote server where files will be deployed."
+            echo "#           Example: server_dir=domains/example.com/public_html"
             echo 'project=$HOME/WebsiteProjects/website3'
-            echo "ssh_host=sls"
-            echo "ssh_user=srv123456"
-            echo "ssh_dir=domains/example.com/public_html"
+            echo "server=sls"
+            echo "server_dir=domains/example.com/public_html"
             echo "### END OF SETTINGS ###"
             echo
             echo 'confirm_cmd() {'
@@ -436,20 +443,25 @@ save_external_deploy_script() {
             echo "    echo \"Deployment failed.\""
             echo "    exit 1"
             echo "fi"
-            echo ""
+            echo
             echo "echo ====== Step 2/4: Add your SSH deploy key to ssh-agent ...  ======"
-            echo "eval \$(ssh-agent)"
-            echo 'ssh-add $HOME/.ssh/id_ed25519'
-            echo ""
+            echo "ssh-add -l"
+            echo "if [[ \$? -eq 2 ]]; then"
+            echo "    echo \"ssh-agent is not running. Starting ssh-agent...\""
+            echo "    eval \$(ssh-agent)"
+            echo "fi"
+            echo "#### Add deploy key directly if needed"
+            echo "# ssh-add \$HOME/.ssh/id_ed25519"
+            echo
             echo "echo ====== Step 3/4: Deploy dist/ ...  ======"
-            echo '# rsync -avz -e ssh --partial $project/dist/ $ssh_user@$ssh_host:$ssh_dir/'
+            echo '# rsync -avz -e ssh --partial $project/dist/ $server:$server_dir/'
             echo "if [[ \$? -ne 0 ]]; then"
             echo "    echo \"Deployment failed.\""
             echo "    exit 1"
             echo "fi"
-            echo ""
+            echo
             echo "echo ====== Step 4/4: Deploy images/ ...  ======"
-            echo '# rsync -avz -e ssh --partial $project/images/ $ssh_user@$ssh_host:$ssh_dir/images/'
+            echo '# rsync -avz -e ssh --partial $project/images/ $server:$server_dir/images/'
             echo "if [[ \$? -ne 0 ]]; then"
             echo "    echo \"Deployment failed.\""
             echo "    exit 1"
